@@ -9,7 +9,6 @@
 	echo "/proc/*"
 	echo "/sys/*"
 	echo "/tmp/*"
-	echo "/usr/lib/vmware-tools/modules/binary"
 	# echo "/var/lib/apt/lists/*"{Packages,Release,Sources}"*" # remove after apt-get
 	echo "/var/lib/dbus/machine-id" # regenerate by dbus-uuidgen --ensure in /etc/init/dbus.conf
 	echo "/var/lib/gdm/*" # home directory of gdm
