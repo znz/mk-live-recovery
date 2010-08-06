@@ -1,7 +1,6 @@
 #!/bin/bash
 # http://www.geekconnection.org/remastersys/info.html
-#set -e
-set -x
+set -ex
 
 WORKDIR=${WORKDIR:-"/home/_work"}
 CD_ROOT=${CD_ROOT:-"/home/_cd"}
@@ -39,9 +38,16 @@ prepare_exclude () {
 }
 
 build_root_fs () {
+    local f d
     $SUDO_CMD rsync -av --delete -HAX --one-file-system --exclude-from="$EXCLUDE_FILE" "/" "${ROOT_FS}/"
 
     cp -rp root-fs.d "${ROOT_FS}/tmp/"
+    for f in scripts/*/*; do
+	d=$(dirname "$f")
+	mkdir -p "${ROOT_FS}/etc/initramfs-tools/$d"
+	cp -v "$f" "${ROOT_FS}/etc/initramfs-tools/$f"
+	chmod +x "${ROOT_FS}/etc/initramfs-tools/$f"
+    done
     $SUDO_CMD mount -o bind /dev/ "${ROOT_FS}/dev"
     $SUDO_CMD mount -t proc proc "${ROOT_FS}/proc"
     trap umount_in_root_fs 0
@@ -91,9 +97,10 @@ make_grub_cfg () {
     } | $SUDO_CMD tee "${CD_ROOT}/boot/grub/grub.cfg"
 }
 
-make_recovery_sh () {
+make_cdrom_recovery () {
     $SUDO_CMD mkdir -p "${CD_ROOT}/recovery"
     $SUDO_CMD sfdisk -d /dev/sda | $SUDO_CMD tee "${CD_ROOT}/recovery/sfdisk-d-sda.txt"
+    $SUDO_CMD cp recovery/restore.desktop "${CD_ROOT}/recovery/restore.desktop"
     $SUDO_CMD cp recovery/restore.sh "${CD_ROOT}/recovery/restore.sh"
     $SUDO_CMD chmod +x "${CD_ROOT}/recovery/restore.sh"
 }
@@ -117,6 +124,6 @@ else
     pack_root_fs
     build_cd_boot
     make_grub_cfg
-    make_recovery_sh
+    make_cdrom_recovery
     build_iso
 fi
