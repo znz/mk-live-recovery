@@ -1,0 +1,35 @@
+#!/bin/sh
+
+PREREQ=""
+DESCRIPTION="Copy some files to $USERNAME's Desktop..."
+
+prereqs()
+{
+       echo "$PREREQ"
+}
+
+case $1 in
+# get pre-requisites
+prereqs)
+       prereqs
+       exit 0
+       ;;
+esac
+
+. /scripts/casper-functions
+
+log_begin_msg "$DESCRIPTION"
+
+env > /root/var/tmp/env.txt
+set -x
+cd /root/cdrom/recovery/
+DESKTOP=`chroot /root sudo -H -u "$USERNAME" xdg-user-dir DESKTOP`
+for f in *.desktop; do
+	if [ -f "$f" ]; then
+		cp "$f" "/root/$DESKTOP/"
+		chmod +x "/root/$DESKTOP/$f"
+		chroot /root chown "$USERNAME" "/root/$DESKTOP/$f"
+	fi
+done
+
+log_end_msg
