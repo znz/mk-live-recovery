@@ -1,6 +1,6 @@
 #!/bin/bash
 # http://www.geekconnection.org/remastersys/info.html
-set -ex
+set -eux
 
 WORKDIR=${WORKDIR:-"/home/_work"}
 CD_ROOT=${CD_ROOT:-"/home/_cd"}
@@ -8,7 +8,7 @@ OUT_ISO=${OUT_ISO:-$WORKDIR/live-recovery-$(date '+%Y%m%d').iso}
 KERNEL_RELEASE=${KERNEL_RELEASE:-"$(uname -r)"}
 INITRD_IMG=${INITRD_IMG:-"/boot/initrd.img-$KERNEL_RELEASE"}
 VMLINUZ=${VMLINUZ:-"/boot/vmlinuz-$KERNEL_RELEASE"}
-if [ -z "$SUDO_CMD" ] && [ `id -u` -eq 0 ]; then
+if [ "${SUDO_CMD:+set}" = set ] && [ `id -u` -eq 0 ]; then
     SUDO_CMD=
 else
     SUDO_CMD=${SUDO_CMD:-"sudo"}
@@ -39,7 +39,7 @@ prepare_exclude () {
 
 build_root_fs () {
     local f d
-    $SUDO_CMD rsync -av --delete -HAX --one-file-system --exclude-from="$EXCLUDE_FILE" "/" "${ROOT_FS}/"
+    $SUDO_CMD rsync -av --delete -HAX --one-file-system --delete-excluded --exclude-from="$EXCLUDE_FILE" "/" "${ROOT_FS}/"
 
     cp -rp root-fs.d "${ROOT_FS}/tmp/"
     for f in scripts/*/*; do
@@ -115,7 +115,7 @@ build_iso () {
     $SUDO_CMD grub-mkrescue "--output=${OUT_ISO}" "${CD_ROOT}"
 }
 
-if [ -n "$1" ]; then
+if [ "${1:+set}" = set ]; then
     "$@"
 else
     prepare_dir
