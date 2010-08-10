@@ -18,9 +18,38 @@ FORMAT=squashfs
 FS_DIR=casper
 EXCLUDE_FILE=${EXCLUDE_FILE:-"$WORKDIR/exclude-list.txt"}
 
+
+trap0_functions=()
+
+trap 'for x in "${trap0_functions[@]}"; do $x; done' 0
+push_trap0_functions () {
+    trap0_functions[${#trap0_functions[@]}]="$@"
+}
+pop_trap0_functions () {
+    trap0_functions=("${trap0_functions[@]:0:$[${#trap0_functions[@]}-1]}")
+}
+
+
 clean () {
     $SUDO_CMD rm -rf "${WORKDIR}"
     $SUDO_CMD rm -rf "${CD_ROOT}"
+}
+
+run_initd () {
+    local f
+    for f in init.d/*.sh; do
+	if [ -x "$f" ]; then
+	    $SUDO_CMD "$f" "$@"
+	fi
+    done
+}
+
+initd_start () {
+    run_initd start
+}
+
+initd_stop () {
+    run_initd stop
 }
 
 prepare_dir () {
@@ -50,7 +79,7 @@ build_root_fs () {
     done
     $SUDO_CMD mount -o bind /dev/ "${ROOT_FS}/dev"
     $SUDO_CMD mount -t proc proc "${ROOT_FS}/proc"
-    trap umount_in_root_fs 0
+    push_trap0_functions umount_in_root_fs
     $SUDO_CMD chroot "${ROOT_FS}" /bin/bash -ex <<'EOF'
 export LANG=C
 for f in /tmp/root-fs.d/*.sh; do
@@ -58,7 +87,7 @@ for f in /tmp/root-fs.d/*.sh; do
 done
 EOF
     umount_in_root_fs
-    trap "" 0
+    pop_trap0_functions
 }
 
 umount_in_root_fs () {
@@ -120,6 +149,7 @@ if [ "${1:+set}" = set ]; then
 else
     prepare_dir
     prepare_exclude
+    push_trap0_functions initd_start; initd_stop
     build_root_fs
     pack_root_fs
     build_cd_boot
