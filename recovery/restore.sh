@@ -46,7 +46,12 @@ umount /target/proc
 umount /target/dev
 umount /target
 echo "終了。(done)"
-MSG="リカバリが終了しました。再起動してください。(Recovery finished. Please reboot."
+
+# Notify the user that a reboot is required
+if [ -x /usr/share/update-notifier/notify-reboot-required ]; then
+    /usr/share/update-notifier/notify-reboot-required
+fi
+MSG="リカバリが終了しました。再起動してください。(Recovery finished. Please reboot.)"
 if ssft_display_message "$TIT" "$MSG"; then
     :
 else
