@@ -1,4 +1,8 @@
 #!/bin/sh
+if [ "${LOCAL_TEST:+set}" != set ]; then
+	exit
+fi
+
 LIVE_OPTIONS="boot=casper nopersistent rw break=local"
 if [ -n "$SUDO_USER" ]; then
 	LIVE_OPTIONS="$LIVE_OPTIONS username=$SUDO_USER"
