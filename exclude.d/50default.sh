@@ -2,6 +2,7 @@
 {
 	echo "${CD_ROOT}"
 	echo "${WORKDIR}"
+	echo "${OUT_ISO}"
 	echo "/dev/*"
 	echo "/etc/ssh/ssh_host_*" # ssh host keys
 	echo "/etc/udev/rules.d/70-persistent-*.rules" # cd, net
