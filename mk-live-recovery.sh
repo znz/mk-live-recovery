@@ -2,32 +2,37 @@
 # http://www.geekconnection.org/remastersys/info.html
 set -eux
 
-WORKDIR=${WORKDIR:-"/home/_work"}
-CD_ROOT=${CD_ROOT:-"/home/_cd"}
-OUT_ISO=${OUT_ISO:-$WORKDIR/live-recovery-$(date '+%Y%m%d').iso}
-KERNEL_RELEASE=${KERNEL_RELEASE:-"$(uname -r)"}
-INITRD_IMG=${INITRD_IMG:-"/boot/initrd.img-$KERNEL_RELEASE"}
-VMLINUZ=${VMLINUZ:-"/boot/vmlinuz-$KERNEL_RELEASE"}
+export WORKDIR=${WORKDIR:-"/home/_work"}
+export CD_ROOT=${CD_ROOT:-"/home/_cd"}
+export OUT_ISO=${OUT_ISO:-$WORKDIR/live-recovery-$(date '+%Y%m%d').iso}
+export KERNEL_RELEASE=${KERNEL_RELEASE:-"$(uname -r)"}
+export INITRD_IMG=${INITRD_IMG:-"/boot/initrd.img-$KERNEL_RELEASE"}
+export VMLINUZ=${VMLINUZ:-"/boot/vmlinuz-$KERNEL_RELEASE"}
 if [ "${SUDO_CMD:+set}" = set ] && [ `id -u` -eq 0 ]; then
     SUDO_CMD=
 else
     SUDO_CMD=${SUDO_CMD:-"sudo"}
 fi
-ROOT_FS="${WORKDIR}/rootfs"
-FORMAT=squashfs
-FS_DIR=casper
+export SUDO_CMD
+export ROOT_FS="${WORKDIR}/rootfs"
+export FORMAT=squashfs
+export FS_DIR=casper
 EXCLUDE_FILE=${EXCLUDE_FILE:-"$WORKDIR/exclude-list.txt"}
 
 
-trap0_functions=()
-
-trap 'for x in "${trap0_functions[@]}"; do $x; done' 0
+trap0_functions=("")
+run_trap0_functions () {
+    for x in "${trap0_functions[@]}"; do
+	$x
+    done
+}
 push_trap0_functions () {
     trap0_functions[${#trap0_functions[@]}]="$@"
 }
 pop_trap0_functions () {
     trap0_functions=("${trap0_functions[@]:0:$[${#trap0_functions[@]}-1]}")
 }
+trap run_trap0_functions 0
 
 
 clean () {
@@ -61,7 +66,9 @@ prepare_exclude () {
     local f
     {
 	for f in exclude.d/*.sh; do
-	    . $f
+	    if [ -x "$f" ]; then
+		$f
+	    fi
 	done
     } | $SUDO_CMD tee "$EXCLUDE_FILE"
 }
@@ -119,9 +126,12 @@ build_cd_boot () {
 }
 
 make_grub_cfg () {
+    local f
     {
 	for f in grub.d/*.sh; do
-	    . $f
+	    if [ -x "$f" ]; then
+		"$f"
+	    fi
 	done
     } | $SUDO_CMD tee "${CD_ROOT}/boot/grub/grub.cfg"
 }
