@@ -6,52 +6,59 @@ export SSFT_FRONTEND
 cd "$(dirname "$0")"
 TIT="$(basename "$0")"
 
+TEXTDOMAIN=restore
+export TEXTDOMAIN
+if [ -d locale ]; then
+  TEXTDOMAINDIR=$(pwd)/locale
+  export TEXTDOMAINDIR
+fi
+
 DISK=${DISK:-/dev/sda}
 
-MSG="$DISK をフォーマットします。よろしいですか? (Format $DISK, OK?)"
+MSG="$(eval_gettext 'Format $DISK, OK?')"
 if ssft_yesno "$TIT" "$MSG"; then
     :
 else
     exit $?
 fi
-MSG="$DISK をフォーマットします。問題があればこのまま続行せずにシャットダウンしてください。 (Format $DISK, or shutdown now.)"
+MSG="$(eval_gettext 'Format $DISK, or shutdown now.')"
 if ssft_display_message "$TIT" "$MSG"; then
     :
 else
     exit $?
 fi
-echo "パーティション設定中..."
+gettext "Partitioning..."; echo
 swapoff -a
-if [ -n "$(LANG=C sudo sfdisk -R /dev/sda 2>&1 | grep BLKRRPART)" ]; then
-    MSG="$DISK が使用中です。フォーマットできません。($DISK is currently in use. Can not format.)"
+if [ -n "$(LANG=C sudo sfdisk -R "$DISK" 2>&1 | grep BLKRRPART)" ]; then
+    MSG="$(eval_gettext '$DISK is currently in use. Can not format.')"
     ssft_display_error "$TIT" "$MSG"
     exit 1
 fi
-sfdisk --force /dev/sda < sfdisk-d-sda.txt
-echo "スワップ領域初期化中 (formatting swap)..."
+sfdisk --force "$DISK" < sfdisk-d-sda.txt
+eval_gettext 'Formatting ${DISK}5 as swap...'; echo
 mkswap -L sda-swap /dev/sda5
-echo "ルートパーティション初期化中 (formatting root partition)..."
+eval_gettext 'Formatting ${DISK}1 as root partition...'; echo
 mkfs.ext4 -L sda-root /dev/sda1
-echo "ルートパーティションマウント中(mounting root partition)..."
+eval_gettext 'Mounting ${DISK}1 to /target...'; echo
 mkdir -p /target
 mount /dev/sda1 /target
-echo "ルートパーティションにコピー中(copying to root partition)..."
+gettext 'Copying files to target partition...'
 rsync -aAHX --progress /rofs/ /target/
-echo "ブートローダ設定中(setup boot loader)..."
+gettext 'Setup boot loader...'
 mount --bind /dev /target/dev
 mount -t proc proc /target/proc
 chroot /target grub-install /dev/sda
-echo "ルートパーティションアンマウント中(unmounting root partition)..."
+gettext 'Unmounting target partition...'; echo
 umount /target/proc
 umount /target/dev
 umount /target
-echo "終了。(done)"
+gettext 'done.'
 
 # Notify the user that a reboot is required
 if [ -x /usr/share/update-notifier/notify-reboot-required ]; then
     /usr/share/update-notifier/notify-reboot-required
 fi
-MSG="リカバリが終了しました。再起動してください。(Recovery finished. Please reboot.)"
+MSG="$(gettext 'Recovery finished. Please reboot.')"
 if ssft_display_message "$TIT" "$MSG"; then
     :
 else

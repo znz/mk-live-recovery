@@ -139,8 +139,9 @@ make_grub_cfg () {
 make_cdrom_recovery () {
     $SUDO_CMD mkdir -p "${CD_ROOT}/recovery"
     $SUDO_CMD sfdisk -d /dev/sda | $SUDO_CMD tee "${CD_ROOT}/recovery/sfdisk-d-sda.txt"
-    $SUDO_CMD cp recovery/restore.desktop "${CD_ROOT}/recovery/restore.desktop"
-    $SUDO_CMD cp recovery/restore.sh "${CD_ROOT}/recovery/restore.sh"
+    $SUDO_CMD cp -v recovery/restore.desktop "${CD_ROOT}/recovery/restore.desktop"
+    $SUDO_CMD cp -v recovery/restore.sh "${CD_ROOT}/recovery/restore.sh"
+    $SUDO_CMD cp -rv recovery/locale/ "${CD_ROOT}/recovery/locale/"
     $SUDO_CMD chmod +x "${CD_ROOT}/recovery/restore.sh"
 }
 

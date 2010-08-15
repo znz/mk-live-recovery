@@ -1,0 +1,22 @@
+TEXTDOMAIN = restore
+LANGS = ja
+SRC = restore.sh
+
+none:
+
+updatepo:
+	xgettext -o po/$(TEXTDOMAIN).pot $(SRC)
+	for lang in $(LANGS); do \
+		if [ -f po/$$lang.po ]; then \
+			mv po/$$lang.po po/$$lang.po~; \
+			msgmerge po/$$lang.po~ po/$(TEXTDOMAIN).pot -o po/$$lang.po; \
+		fi \
+	done
+
+makemo:
+	for lang in $(LANGS); do \
+		if [ -f po/$$lang.po ]; then \
+			mkdir -p locale/$$lang/LC_MESSAGES; \
+			msgfmt -o locale/$$lang/LC_MESSAGES/$(TEXTDOMAIN).mo po/$$lang.po; \
+		fi \
+	done
