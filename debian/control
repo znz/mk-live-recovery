@@ -1,0 +1,13 @@
+Source: mk-live-recovery
+Section: misc
+Priority: extra
+Maintainer: Kazuhiro NISHIYAMA <zn@mbf.nifty.com>
+Build-Depends: debhelper (>= 7)
+Standards-Version: 3.8.3
+Homepage: http://github.com/znz/mk-live-recovery
+
+Package: mk-live-recovery
+Architecture: all
+Depends: casper, ${misc:Depends}
+Description: Live recovery image maker
+ mk-live-recovery makes live image that can recovery OS.

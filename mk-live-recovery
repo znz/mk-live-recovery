@@ -2,8 +2,8 @@
 # http://www.geekconnection.org/remastersys/info.html
 set -eux
 
-export WORKDIR=${WORKDIR:-"/home/_work"}
-export CD_ROOT=${CD_ROOT:-"/home/_cd"}
+export WORKDIR=${WORKDIR:-"/tmp/_work"}
+export CD_ROOT=${CD_ROOT:-"/tmp/_cd"}
 export OUT_ISO=${OUT_ISO:-$WORKDIR/live-recovery-$(date '+%Y%m%d').iso}
 export KERNEL_RELEASE=${KERNEL_RELEASE:-"$(uname -r)"}
 export INITRD_IMG=${INITRD_IMG:-"/boot/initrd.img-$KERNEL_RELEASE"}
@@ -60,11 +60,16 @@ initd_stop () {
 prepare_dir () {
     $SUDO_CMD mkdir -p "${ROOT_FS}"
     $SUDO_CMD mkdir -p "${CD_ROOT}"
+    if [ ! -d $(dirname "$OUT_ISO") ]; then
+	echo "directory not found: $(dirname "$OUT_ISO")"
+	exit 1
+    fi
 }
 
 prepare_exclude () {
     local f
     {
+	[ ! -d exclude.d ] && cd /etc/mk-live-recovery
 	for f in exclude.d/*.sh; do
 	    if [ -x "$f" ]; then
 		$f
@@ -77,13 +82,16 @@ build_root_fs () {
     local f d
     $SUDO_CMD rsync -av --delete -HAX --one-file-system --delete-excluded --exclude-from="$EXCLUDE_FILE" "/" "${ROOT_FS}/"
 
+    [ ! -d root-fs.d ] && cd /etc/mk-live-recovery
     cp -rp root-fs.d "${ROOT_FS}/tmp/"
-    for f in scripts/*/*; do
-	d=$(dirname "$f")
-	mkdir -p "${ROOT_FS}/etc/initramfs-tools/$d"
-	cp -v "$f" "${ROOT_FS}/etc/initramfs-tools/$f"
-	chmod +x "${ROOT_FS}/etc/initramfs-tools/$f"
-    done
+    if [ -d scripts ]; then
+	for f in scripts/*/*; do
+	    d=$(dirname "$f")
+	    mkdir -p "${ROOT_FS}/etc/initramfs-tools/$d"
+	    cp -v "$f" "${ROOT_FS}/etc/initramfs-tools/$f"
+	    chmod +x "${ROOT_FS}/etc/initramfs-tools/$f"
+	done
+    fi
     $SUDO_CMD mount -o bind /dev/ "${ROOT_FS}/dev"
     $SUDO_CMD mount -t proc proc "${ROOT_FS}/proc"
     push_trap0_functions umount_in_root_fs
@@ -127,6 +135,7 @@ build_cd_boot () {
 
 make_grub_cfg () {
     local f
+    [ ! -d grub.d ] && cd /etc/mk-live-recovery
     {
 	for f in grub.d/*.sh; do
 	    if [ -x "$f" ]; then
@@ -139,6 +148,7 @@ make_grub_cfg () {
 make_cdrom_recovery () {
     $SUDO_CMD mkdir -p "${CD_ROOT}/recovery"
     $SUDO_CMD sfdisk -d /dev/sda | $SUDO_CMD tee "${CD_ROOT}/recovery/sfdisk-d-sda.txt"
+    [ ! -d recovery ] && cd /usr/share/mk-live-recovery
     $SUDO_CMD cp -v recovery/restore.desktop "${CD_ROOT}/recovery/restore.desktop"
     $SUDO_CMD cp -v recovery/restore.sh "${CD_ROOT}/recovery/restore.sh"
     $SUDO_CMD cp -rv recovery/locale/ "${CD_ROOT}/recovery/locale/"
