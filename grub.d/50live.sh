@@ -1,7 +1,7 @@
 #!/bin/sh
 LIVE_OPTIONS="boot=casper nopersistent rw quiet splash"
 if [ -n "$SUDO_USER" ]; then
-	LIVE_OPTIONS="$LIVE_OPTIONS username=$SUDO_USER"
+	LIVE_OPTIONS="$LIVE_OPTIONS username=$SUDO_USER hostname=recovery-$(hostname -s)"
 fi
 cat <<EOF
 menuentry "グラフィカルモードでライブ環境を起動する (Start Live GNU/Linux in Graphical Mode)" {
