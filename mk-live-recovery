@@ -165,9 +165,7 @@ build_iso () {
     $SUDO_CMD grub-mkrescue "--output=${OUT_ISO}" "${CD_ROOT}"
 }
 
-if [ "${1:+set}" = set ]; then
-    "$@"
-else
+build () {
     prepare_dir
     prepare_exclude
     push_trap0_functions initd_start; initd_stop
@@ -177,4 +175,18 @@ else
     make_grub_cfg
     make_cdrom_recovery
     build_iso
+}
+
+usage () {
+    cat <<USAGE
+usage: $0 build
+usage: $0 clean
+USAGE
+}
+
+if [ "${1:+set}" = set ]; then
+    "$@"
+else
+    usage
+    exit 1
 fi
