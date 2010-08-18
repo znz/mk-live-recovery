@@ -1,3 +1,9 @@
+mk-live-recovery (0~20100818) lucid; urgency=low
+
+  * add mk-mirror-copy
+
+ -- Kazuhiro NISHIYAMA <zn@mbf.nifty.com>  Wed, 18 Aug 2010 19:04:00 +0900
+
 mk-live-recovery (0~20100817) unstable; urgency=low
 
   * Initial Release.
