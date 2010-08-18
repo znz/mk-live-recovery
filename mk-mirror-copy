@@ -1,0 +1,165 @@
+#!/bin/bash
+set -eu
+
+export TARGET_DEVICE=${TARGET_DEVICE:-/dev/sdb1}
+export TARGET_SWAP=${TARGET_SWAP:-/dev/sdb5}
+export MOUNTPOINT=${MOUNTPOINT:-/mnt/sdb1}
+if [ "${SUDO_CMD:+set}" = set ] && [ `id -u` -eq 0 ]; then
+    SUDO_CMD=
+else
+    SUDO_CMD=${SUDO_CMD:-"sudo"}
+fi
+export SUDO_CMD
+
+trap0_functions=("")
+run_trap0_functions () {
+    for x in "${trap0_functions[@]}"; do
+        $x
+    done
+}
+unshift_trap0_functions () {
+    trap0_functions=("$*" "${trap0_functions:+${trap0_functions[@]}}")
+}
+shift_trap0_functions () {
+    trap0_functions=("${trap0_functions[@]:1:$[${#trap0_functions[@]}]}")
+}
+trap run_trap0_functions 0
+
+
+run_initd () {
+    local f
+    [ ! -d init.d ] && cd /etc/mk-live-recovery
+    for f in init.d/*.sh; do
+        if [ -x "$f" ]; then
+            $SUDO_CMD "$f" "$@"
+        fi
+    done
+}
+
+initd_start () {
+    run_initd start
+}
+
+initd_stop () {
+    run_initd stop
+}
+
+umount_target () {
+    $SUDO_CMD umount "$MOUNTPOINT"
+}
+
+mount_target () {
+    if awk "\$2==\"$MOUNTPOINT\"{exit 1}" /proc/mounts; then
+        $SUDO_CMD mount "$TARGET_DEVICE" "$MOUNTPOINT"
+        unshift_trap0_functions umount_target
+    else
+        echo "already mounted: $MOUNTPOINT"
+    fi
+}
+
+bind_umount_in_target () {
+    $SUDO_CMD umount "$MOUNTPOINT/dev"
+    $SUDO_CMD umount "$MOUNTPOINT/proc"
+}
+
+bind_mount_in_target () {
+    $SUDO_CMD mount --bind /proc "$MOUNTPOINT/proc"
+    $SUDO_CMD mount --bind /dev "$MOUNTPOINT/dev"
+    unshift_trap0_functions bind_umount_in_target
+}
+
+grub_install_in_target () {
+    $SUDO_CMD chroot /mnt/sdb1 grub-install /dev/sdb
+    $SUDO_CMD chroot /mnt/sdb1 update-grub
+}
+
+unlink_exclude_file () {
+    if [ -f "$EXCLUDE_FILE" ]; then
+        rm -f "$EXCLUDE_FILE"
+    fi
+}
+
+mk_exclude_file () {
+    EXCLUDE_FILE=${EXCLUDE_FILE:-"$(mktemp)"}
+    unshift_trap0_functions unlink_exclude_file
+    local f
+    {
+        [ ! -d exclude.d ] && cd /etc/mk-live-recovery
+        for f in exclude.d/*.sh; do
+            if [ -x "$f" ]; then
+                $f
+            fi
+        done
+    } | $SUDO_CMD tee "$EXCLUDE_FILE"
+}
+
+mirror_full () {
+    mk_exclude_file
+    $SUDO_CMD rsync -av --delete -HAX --one-file-system --delete-excluded --exclude-from="$EXCLUDE_FILE" "/" "${MOUNTPOINT}/"
+}
+
+mirror_data () {
+    mk_exclude_file
+    { 
+        cat <<EOF
++ /home/
++ /home/**
+- *
+EOF
+    } | $SUDO_CMD tee -a "$EXCLUDE_FILE"
+    $SUDO_CMD rsync -av --delete -HAX --one-file-system --exclude-from="$EXCLUDE_FILE" "/" "${MOUNTPOINT}/"
+}
+
+make_etc_fstab_in_target () {
+    local ROOT_UUID SWAP_UUID
+    ROOT_UUID=$(blkid -o value -s UUID "$TARGET_DEVICE")
+    SWAP_UUID=$(blkid -o value -s UUID "$TARGET_SWAP")
+    $SUDO_CMD mv "$MOUNTPOINT/etc/fstab" "$MOUNTPOINT/etc/fstab.bak"
+    {
+        cat <<EOF
+# /etc/fstab: static file system information.
+#
+# Use 'blkid -o value -s UUID' to print the universally unique identifier
+# for a device; this may be used with UUID= as a more robust way to name
+# devices that works even if disks are added and removed. See fstab(5).
+#
+# <file system> <mount point>   <type>  <options>       <dump>  <pass>
+proc            /proc           proc    nodev,noexec,nosuid 0       0
+# / was on /dev/sda1 during installation
+UUID=$ROOT_UUID /               ext4    errors=remount-ro 0       1
+# swap was on /dev/sda5 during installation
+UUID=$SWAP_UUID none            swap    sw              0       0
+EOF
+    } | $SUDO_CMD tee "$MOUNTPOINT/etc/fstab"
+}
+
+full () {
+    unshift_trap0_functions initd_start; initd_stop
+    mount_target
+    mirror_full
+    bind_mount_in_target
+    make_etc_fstab_in_target
+    grub_install_in_target
+    echo "done."
+}
+
+data () {
+    unshift_trap0_functions initd_start; initd_stop
+    mount_target
+    mirror_data
+    echo "done."
+}
+usage () {
+    cat <<USAGE
+usage: $0 full
+usage: $0 data
+USAGE
+}
+
+if [ "${1:+set}" = set ]; then
+    set -x
+    "$@"
+else
+    usage
+    exit 1
+fi
