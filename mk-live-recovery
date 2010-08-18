@@ -1,6 +1,6 @@
 #!/bin/bash
 # http://www.geekconnection.org/remastersys/info.html
-set -eux
+set -eu
 
 export WORKDIR=${WORKDIR:-"/tmp/_work"}
 export CD_ROOT=${CD_ROOT:-"/tmp/_cd"}
@@ -185,6 +185,7 @@ USAGE
 }
 
 if [ "${1:+set}" = set ]; then
+    set -x
     "$@"
 else
     usage
