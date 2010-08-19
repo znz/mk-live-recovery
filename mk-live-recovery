@@ -73,7 +73,7 @@ prepare_exclude () {
 	[ ! -d exclude.d ] && cd /etc/mk-live-recovery
 	for f in exclude.d/*.sh; do
 	    if [ -x "$f" ]; then
-		$f
+		"$f" live
 	    fi
 	done
     } | $SUDO_CMD tee "$EXCLUDE_FILE"

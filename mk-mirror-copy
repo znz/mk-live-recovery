@@ -83,26 +83,19 @@ mk_exclude_file () {
         [ ! -d exclude.d ] && cd /etc/mk-live-recovery
         for f in exclude.d/*.sh; do
             if [ -x "$f" ]; then
-                $f
+                "$f" "$1"
             fi
         done
     } | $SUDO_CMD tee "$EXCLUDE_FILE"
 }
 
 mirror_full () {
-    mk_exclude_file
+    mk_exclude_file full
     $SUDO_CMD rsync -av --delete -HAX --one-file-system --delete-excluded --exclude-from="$EXCLUDE_FILE" "/" "${MOUNTPOINT}/"
 }
 
 mirror_data () {
-    mk_exclude_file
-    { 
-        cat <<EOF
-+ /home/
-+ /home/**
-- *
-EOF
-    } | $SUDO_CMD tee -a "$EXCLUDE_FILE"
+    mk_exclude_file data
     $SUDO_CMD rsync -av --delete -HAX --one-file-system --exclude-from="$EXCLUDE_FILE" "/" "${MOUNTPOINT}/"
 }
 
