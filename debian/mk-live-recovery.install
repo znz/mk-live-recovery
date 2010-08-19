@@ -3,6 +3,7 @@ grub.d etc/mk-live-recovery
 init.d etc/mk-live-recovery
 mk-live-recovery usr/sbin
 mk-mirror-copy usr/sbin
+post-mirror.d etc/mk-live-recovery
 recovery usr/share/mk-live-recovery
 root-fs.d etc/mk-live-recovery
 scripts usr/share/initramfs-tools

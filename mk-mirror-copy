@@ -1,8 +1,9 @@
 #!/bin/bash
 set -eu
 
-export TARGET_DEVICE=${TARGET_DEVICE:-/dev/sdb1}
-export TARGET_SWAP=${TARGET_SWAP:-/dev/sdb5}
+export TARGET_DRIVE=${TARGET_DRIVE:-/dev/sdb}
+export ROOT_DEVICE=${ROOT_DEVICE:-/dev/sdb1}
+export SWAP_DEVICE=${SWAP_DEVICE:-/dev/sdb5}
 export MOUNTPOINT=${MOUNTPOINT:-/mnt/sdb1}
 if [ "${SUDO_CMD:+set}" = set ] && [ `id -u` -eq 0 ]; then
     SUDO_CMD=
@@ -50,7 +51,7 @@ umount_target () {
 
 mount_target () {
     if awk "\$2==\"$MOUNTPOINT\"{exit 1}" /proc/mounts; then
-        $SUDO_CMD mount "$TARGET_DEVICE" "$MOUNTPOINT"
+        $SUDO_CMD mount "$ROOT_DEVICE" "$MOUNTPOINT"
         unshift_trap0_functions umount_target
     else
         echo "already mounted: $MOUNTPOINT"
@@ -66,11 +67,6 @@ bind_mount_in_target () {
     $SUDO_CMD mount --bind /proc "$MOUNTPOINT/proc"
     $SUDO_CMD mount --bind /dev "$MOUNTPOINT/dev"
     unshift_trap0_functions bind_umount_in_target
-}
-
-grub_install_in_target () {
-    $SUDO_CMD chroot /mnt/sdb1 grub-install /dev/sdb
-    $SUDO_CMD chroot /mnt/sdb1 update-grub
 }
 
 unlink_exclude_file () {
@@ -110,27 +106,14 @@ EOF
     $SUDO_CMD rsync -av --delete -HAX --one-file-system --exclude-from="$EXCLUDE_FILE" "/" "${MOUNTPOINT}/"
 }
 
-make_etc_fstab_in_target () {
-    local ROOT_UUID SWAP_UUID
-    ROOT_UUID=$(blkid -o value -s UUID "$TARGET_DEVICE")
-    SWAP_UUID=$(blkid -o value -s UUID "$TARGET_SWAP")
-    $SUDO_CMD mv "$MOUNTPOINT/etc/fstab" "$MOUNTPOINT/etc/fstab.bak"
-    {
-        cat <<EOF
-# /etc/fstab: static file system information.
-#
-# Use 'blkid -o value -s UUID' to print the universally unique identifier
-# for a device; this may be used with UUID= as a more robust way to name
-# devices that works even if disks are added and removed. See fstab(5).
-#
-# <file system> <mount point>   <type>  <options>       <dump>  <pass>
-proc            /proc           proc    nodev,noexec,nosuid 0       0
-# / was on /dev/sda1 during installation
-UUID=$ROOT_UUID /               ext4    errors=remount-ro 0       1
-# swap was on /dev/sda5 during installation
-UUID=$SWAP_UUID none            swap    sw              0       0
-EOF
-    } | $SUDO_CMD tee "$MOUNTPOINT/etc/fstab"
+run_post_mirror () {
+    local f
+    [ ! -d post-mirror.d ] && cd /etc/mk-live-recovery
+    for f in post-mirror.d/*.sh; do
+        if [ -x "$f" ]; then
+            $SUDO_CMD "$f" "$@"
+        fi
+    done
 }
 
 full () {
@@ -138,8 +121,7 @@ full () {
     mount_target
     mirror_full
     bind_mount_in_target
-    make_etc_fstab_in_target
-    grub_install_in_target
+    run_post_mirror
     echo "done."
 }
 
