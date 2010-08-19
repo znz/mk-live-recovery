@@ -33,7 +33,7 @@ else
     exit $?
 fi
 MSG="$(eval_gettext 'Format $TARGET_DRIVE, really OK?')"
-if ssft_display_message "$TIT" "$MSG"; then
+if ssft_yesno "$TIT" "$MSG"; then
     :
 else
     exit $?
