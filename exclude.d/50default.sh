@@ -16,6 +16,7 @@
 	echo "/var/lib/logcheck/offset.var.log.*"
 	echo "/var/lib/logrotate/status"
 	echo "/var/lib/postgresql/.*_history" # bash, psql
+	echo "/var/log/*.0" # savelog
 	echo "/var/log/*.1" # rotated logs
 	echo "/var/log/*.gz" # rotated logs
 	echo "/var/log/gdm/*"
@@ -30,6 +31,7 @@
 	echo /{root,home/\*}/.{compiz/session,metacity/sessions,nautilus,themes,thumbnails} # cache files
 	echo /{root,home/\*}/.{gstreamer-\*,gvfs,mozilla/firefox/\*/Cache} # cache files
 	echo /{root,home/\*}/.{{bash,psql}_history,font\*,icons,lesshst,recently-used\*,viminfo,xsession-errors\*} # history files
+	echo /{root,home/\*}/.config/{ibus,indicators}
 	echo /{root,home/\*}/tmp # temporary directory
 	echo /{root,home/\*}/{Maildir,mbox} # mail
 } | xargs -n1 -- printf -- '- %s\n'
