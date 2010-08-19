@@ -42,6 +42,7 @@ clean () {
 
 run_initd () {
     local f
+    [ ! -d init.d ] && cd /etc/mk-live-recovery
     for f in init.d/*.sh; do
 	if [ -x "$f" ]; then
 	    $SUDO_CMD "$f" "$@"
