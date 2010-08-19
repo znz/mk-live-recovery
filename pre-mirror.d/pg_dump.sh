@@ -18,8 +18,10 @@ postgresql_dump_all () {
     PG_DATABASES=$( su postgres -c "psql -c 'SELECT datname FROM pg_database;'" | egrep '^ [^ ]' | egrep -v '^ template[01]$|^ postgres$' )
 
     mkdir -p "$PG_BACKUP_DIR"
+    savelog -q "$PG_BACKUP_DIR/psql-l.txt" 
     su postgres -c "psql -l" >"$PG_BACKUP_DIR/psql-l.txt" 
     for db_name in $PG_DATABASES; do
+	savelog -q "$PG_BACKUP_DIR/$db_name.pg_dump" 
         su postgres -c "$PG_DUMP $db_name" >"$PG_BACKUP_DIR/$db_name.pg_dump" 
     done
 }
