@@ -1,0 +1,51 @@
+#!/bin/bash
+set -ex
+. ssft.sh
+SSFT_FRONTEND=${SSFT_FRONTEND:-$(ssft_choose_frontend)}
+export SSFT_FRONTEND
+cd "$(dirname "$0")"
+TIT="$(basename "$0")"
+
+MAIN=format-and-mirror-copy
+export TEXTDOMAIN
+if [ -d locale ]; then
+  TEXTDOMAINDIR=$(pwd)/locale
+  export TEXTDOMAINDIR
+fi
+
+export SRC_DRIVE=${SRC_DRIVE:-/dev/sda}
+export TARGET_DRIVE=${TARGET_DRIVE:-/dev/sdb}
+export ROOT_DEVICE=${ROOT_DEVICE:-${TARGET_DRIVE}1}
+export SWAP_DEVICE=${SWAP_DEVICE:-${TARGET_DRIVE}5}
+export MOUNTPOINT=${MOUNTPOINT:-/mnt/sdb1}
+if [ "${SUDO_CMD:+set}" = set ] && [ `id -u` -eq 0 ]; then
+    SUDO_CMD=
+else
+    SUDO_CMD=${SUDO_CMD:-"sudo"}
+fi
+export SUDO_CMD
+
+
+MSG="$(eval_gettext 'Format $TARGET_DRIVE, OK?')"
+if ssft_yesno "$TIT" "$MSG"; then
+    :
+else
+    exit $?
+fi
+MSG="$(eval_gettext 'Format $TARGET_DRIVE, really OK?')"
+if ssft_display_message "$TIT" "$MSG"; then
+    :
+else
+    exit $?
+fi
+gettext "Partitioning..."; echo
+if [ -n "$(LANG=C $SUDO_CMD sfdisk -R "$TARGET_DRIVE" 2>&1 | grep BLKRRPART)" ]; then
+    MSG="$(eval_gettext '$TARGET_DRIVE is currently in use. Can not format.')"
+    ssft_display_error "$TIT" "$MSG"
+    exit 1
+fi
+$SUDO_CMD sfdisk -d "$SRC_DRIVE" | $SUDO_CMD sfdisk --force "$TARGET_DRIVE"
+
+$SUDO_CMD mkfs.ext4 "$ROOT_DEVICE"
+$SUDO_CMD mkswap "$SWAP_DEVICE"
+$SUDO_CMD mk-mirror-copy full
