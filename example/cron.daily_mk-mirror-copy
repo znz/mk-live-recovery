@@ -1,0 +1,13 @@
+#!/bin/sh
+# /etc/cron.daily/mk-mirror-copy
+
+test -x /usr/sbin/mk-mirror-copy || exit 0
+LOG=/var/log/mk-mirror-copy.log
+{
+    date
+    /usr/sbin/mk-mirror-copy data
+    date
+} >$LOG 2>&1
+if test -x /usr/bin/savelog; then
+    /usr/bin/savelog -q $LOG
+fi
