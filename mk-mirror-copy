@@ -120,10 +120,10 @@ run_hook () {
 full () {
     unshift_trap0_functions initd_start; initd_stop
     mount_target
-    run_hook pre_mirror full
+    run_hook pre-mirror full
     mirror_full
     bind_mount_in_target
-    run_hook post_mirror full
+    run_hook post-mirror full
     echo "done."
 }
 
