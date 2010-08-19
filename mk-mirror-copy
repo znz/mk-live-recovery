@@ -106,10 +106,11 @@ EOF
     $SUDO_CMD rsync -av --delete -HAX --one-file-system --exclude-from="$EXCLUDE_FILE" "/" "${MOUNTPOINT}/"
 }
 
-run_post_mirror () {
+run_hook () {
+    local hook_dir="$1"; shift
     local f
-    [ ! -d post-mirror.d ] && cd /etc/mk-live-recovery
-    for f in post-mirror.d/*.sh; do
+    [ ! -d "$hook_dir".d ] && cd /etc/mk-live-recovery
+    for f in "$hook_dir".d/*.sh; do
         if [ -x "$f" ]; then
             "$f" "$@"
         fi
@@ -119,16 +120,18 @@ run_post_mirror () {
 full () {
     unshift_trap0_functions initd_start; initd_stop
     mount_target
+    run_hook pre_mirror full
     mirror_full
     bind_mount_in_target
-    run_post_mirror
+    run_hook post_mirror full
     echo "done."
 }
 
 data () {
-    unshift_trap0_functions initd_start; initd_stop
     mount_target
+    run_hook pre-mirror data
     mirror_data
+    run_hook post-mirror data
     echo "done."
 }
 usage () {
