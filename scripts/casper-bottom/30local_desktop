@@ -28,7 +28,7 @@ for f in *.desktop; do
 	if [ -f "$f" ]; then
 		cp "$f" "/root/$DESKTOP/"
 		chmod +x "/root/$DESKTOP/$f"
-		chroot /root chown "$USERNAME" "/root/$DESKTOP/$f"
+		chroot /root chown "$USERNAME" "$DESKTOP/$f"
 	fi
 done
 
