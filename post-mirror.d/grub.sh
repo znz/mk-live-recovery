@@ -1,5 +1,18 @@
 #!/bin/bash
-set -eux
+set -eu
 
-$SUDO_CMD chroot "$MOUNTPOINT" grub-install "$TARGET_DRIVE"
-$SUDO_CMD chroot "$MOUNTPOINT" update-grub
+if [ -f /etc/default/mk-live-recovery ]; then
+    . /etc/default/mk-live-recovery
+fi
+
+install_grub () {
+    $SUDO_CMD chroot "$MOUNTPOINT" grub-install "$TARGET_DRIVE"
+    $SUDO_CMD chroot "$MOUNTPOINT" update-grub
+}
+
+case "$1" in
+    full)
+	set -x
+	install_grub
+	;;
+esac

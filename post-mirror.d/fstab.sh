@@ -1,5 +1,9 @@
 #!/bin/bash
-set -eux
+set -eu
+
+if [ -f /etc/default/mk-live-recovery ]; then
+    . /etc/default/mk-live-recovery
+fi
 
 generate_fstab () {
     ROOT_DEVICE=$1
@@ -37,4 +41,9 @@ make_etc_fstab () {
     generate_fstab "$ROOT_DEVICE" "$SWAP_DEVICE" | ${SUDO_CMD-} tee "$MOUNTPOINT/etc/fstab"
 }
 
-make_etc_fstab
+case "$1" in
+    full)
+	set -x
+	make_etc_fstab
+	;;
+esac
