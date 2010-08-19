@@ -48,6 +48,10 @@ gettext 'Setup boot loader...'
 mount --bind /dev /target/dev
 mount -t proc proc /target/proc
 chroot /target grub-install /dev/sda
+gettext 'Setup openssh-server...'
+touch /target/etc/ssh/sshd_not_to_be_run
+chroot /target dpkg-reconfigure -plow openssh-server
+rm -f /target/etc/ssh/sshd_not_to_be_run
 gettext 'Unmounting target partition...'; echo
 umount /target/proc
 umount /target/dev
