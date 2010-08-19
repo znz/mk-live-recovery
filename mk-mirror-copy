@@ -111,7 +111,7 @@ run_post_mirror () {
     [ ! -d post-mirror.d ] && cd /etc/mk-live-recovery
     for f in post-mirror.d/*.sh; do
         if [ -x "$f" ]; then
-            $SUDO_CMD "$f" "$@"
+            "$f" "$@"
         fi
     done
 }

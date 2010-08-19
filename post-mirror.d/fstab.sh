@@ -1,16 +1,16 @@
 #!/bin/bash
-set -eu
+set -eux
 
 generate_fstab () {
     ROOT_DEVICE=$1
     SWAP_DEVICE=$2
-    ROOT_UUID=$(blkid -o value -s UUID "$ROOT_DEVICE")
+    ROOT_UUID=$($SUDO_CMD blkid -o value -s UUID "$ROOT_DEVICE")
     if [ -n "$ROOT_UUID" ]; then
         ROOT_FS="UUID=${ROOT_UUID}"
     else
         ROOT_FS="$ROOT_DEVICE"
     fi
-    SWAP_UUID=$(blkid -o value -s UUID "$SWAP_DEVICE")
+    SWAP_UUID=$($SUDO_CMD blkid -o value -s UUID "$SWAP_DEVICE")
     if [ -n "$SWAP_UUID" ]; then
         SWAP_FS="UUID=${SWAP_UUID}"
     else
@@ -33,8 +33,8 @@ EOF
 }
 
 make_etc_fstab () {
-    $SUDO_CMD mv "$MOUNTPOINT/etc/fstab" "$MOUNTPOINT/etc/fstab.bak"
-    generate_fstab "$ROOT_DEVICE" "$SWAP_DEVICE" | $SUDO_CMD tee "$MOUNTPOINT/etc/fstab"
+    ${SUDO_CMD-} mv "$MOUNTPOINT/etc/fstab" "$MOUNTPOINT/etc/fstab.bak"
+    generate_fstab "$ROOT_DEVICE" "$SWAP_DEVICE" | ${SUDO_CMD-} tee "$MOUNTPOINT/etc/fstab"
 }
 
 make_etc_fstab
