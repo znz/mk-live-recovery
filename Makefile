@@ -1,11 +1,11 @@
-TEXTDOMAIN = restore
+TEXTDOMAIN = mk-live-recovery
 LANGS = ja
-SRC = restore.sh
+SRC = common-functions format-and-mirror-copy  mk-live-recovery mk-mirror-copy recovery/restore.sh
 
 none:
 
 updatepo:
-	xgettext -o po/$(TEXTDOMAIN).pot $(SRC)
+	xgettext -o po/$(TEXTDOMAIN).pot -L Shell $(SRC)
 	for lang in $(LANGS); do \
 		if [ -f po/$$lang.po ]; then \
 			mv po/$$lang.po po/$$lang.po~; \

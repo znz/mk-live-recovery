@@ -1,0 +1,101 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2010-08-20 21:13+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: format-and-mirror-copy:18
+#, sh-format
+msgid "Format ${TARGET_DRIVE}, OK?"
+msgstr "${TARGET_DRIVE} をフォーマットします。よろしいですか?"
+
+#: format-and-mirror-copy:24
+#, sh-format
+msgid "Format ${TARGET_DRIVE}, really OK?"
+msgstr "${TARGET_DRIVE} をフォーマットします。本当によろしいですか?"
+
+#: format-and-mirror-copy:32
+#, sh-format
+msgid "Disable swap ${SWAP_DEVICE}..."
+msgstr "${SWAP_DEVICE} を無効にしています..."
+
+#: format-and-mirror-copy:36
+msgid "Partitioning..."
+msgstr "パーティション設定中..."
+
+#: format-and-mirror-copy:38
+#, sh-format
+msgid "${TARGET_DRIVE} is currently in use. Can not format."
+msgstr "${TARGET_DRIVE} が使用中です。フォーマットできません。"
+
+#: format-and-mirror-copy:48
+#, sh-format
+msgid "Formatting ${SWAP_DEVICE} as swap..."
+msgstr "${SWAP_DEVICE} をスワップ領域として初期化中..."
+
+#: format-and-mirror-copy:51
+#, sh-format
+msgid "Formatting ${ROOT_DEVICE} as root partition..."
+msgstr "${ROOT_DEVICE} をルート領域として初期化中..."
+
+#: format-and-mirror-copy:53
+#, sh-format
+msgid "Mounting ${ROOT_DEVICE} to ${MOUNTPOINT}..."
+msgstr "${ROOT_DEVICE} を ${MOUNTPOINT} にマウント中..."
+
+#: format-and-mirror-copy:56
+msgid "Copying files to target partition..."
+msgstr "ターゲット領域にファイルをコピー中..."
+
+#: format-and-mirror-copy:58
+msgid "Unmounting target partition..."
+msgstr "ターゲット領域をアンマウント中..."
+
+#: format-and-mirror-copy:61 mk-live-recovery:140 mk-mirror-copy:77
+msgid "done."
+msgstr "完了。"
+
+#: format-and-mirror-copy:68
+msgid "Recovery finished. Please reboot."
+msgstr "リカバリが完了しました。再起動してください。"
+
+#: mk-live-recovery:31
+#, sh-format
+msgid "directory not found: ${OUT_ISO_DIR}"
+msgstr "ディレクトリ「${OUT_ISO_DIR}」がありません。"
+
+#: mk-live-recovery:39
+msgid "Preparing exclude file..."
+msgstr "除外ファイルを準備しています..."
+
+#: mk-live-recovery:45
+msgid "Building root fs..."
+msgstr "root fs を構築しています..."
+
+#: mk-live-recovery:69
+msgid "Packing root fs..."
+msgstr "root fs をパックしています..."
+
+#: mk-live-recovery:76
+msgid "Building /boot..."
+msgstr "/boot を構築しています..."
+
+#: mk-live-recovery:94
+msgid "Making /boot/grub/grub.cfg..."
+msgstr "/boot/grub/grub.cfg を作成しています..."
+
+#: mk-live-recovery:99
+msgid "Making /recovery..."
+msgstr "/recovery を作成しています..."

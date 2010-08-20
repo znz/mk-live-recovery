@@ -8,6 +8,19 @@ else
 fi
 export SUDO_CMD
 
+. ssft.sh
+SSFT_FRONTEND=${SSFT_FRONTEND:-$(ssft_choose_frontend)}
+export SSFT_FRONTEND
+cd "$(dirname "$0")"
+TIT="$(basename "$0")"
+
+TEXTDOMAIN=mk-live-recovery
+export TEXTDOMAIN
+if [ -d locale ]; then
+  TEXTDOMAINDIR=$(pwd)/locale
+  export TEXTDOMAINDIR
+fi
+
 # hooks before exit
 # hook should be simple command. escaped string may cause troubles.
 trap0_functions=("")
@@ -82,4 +95,22 @@ bind_mount_dev_proc () {
     $SUDO_CMD mount --bind /proc "$MOUNTPOINT/proc"
     $SUDO_CMD mount --bind /dev "$MOUNTPOINT/dev"
     unshift_trap0_functions _bind_umount_dev_proc
+}
+
+umount_target () {
+    $SUDO_CMD umount "$MOUNTPOINT"
+}
+
+mount_target () {
+    if awk "\$2==\"$MOUNTPOINT\"{exit 1}" /proc/mounts; then
+        $SUDO_CMD mount "$ROOT_DEVICE" "$MOUNTPOINT"
+        unshift_trap0_functions umount_target
+    else
+        echo "already mounted: $MOUNTPOINT"
+    fi
+}
+
+V () {
+	echo "+" "$@"
+	"$@"
 }

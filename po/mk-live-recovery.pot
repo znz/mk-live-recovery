@@ -1,0 +1,101 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2010-08-20 21:13+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: format-and-mirror-copy:18
+#, sh-format
+msgid "Format ${TARGET_DRIVE}, OK?"
+msgstr ""
+
+#: format-and-mirror-copy:24
+#, sh-format
+msgid "Format ${TARGET_DRIVE}, really OK?"
+msgstr ""
+
+#: format-and-mirror-copy:32
+#, sh-format
+msgid "Disable swap ${SWAP_DEVICE}..."
+msgstr ""
+
+#: format-and-mirror-copy:36
+msgid "Partitioning..."
+msgstr ""
+
+#: format-and-mirror-copy:38
+#, sh-format
+msgid "${TARGET_DRIVE} is currently in use. Can not format."
+msgstr ""
+
+#: format-and-mirror-copy:48
+#, sh-format
+msgid "Formatting ${SWAP_DEVICE} as swap..."
+msgstr ""
+
+#: format-and-mirror-copy:51
+#, sh-format
+msgid "Formatting ${ROOT_DEVICE} as root partition..."
+msgstr ""
+
+#: format-and-mirror-copy:53
+#, sh-format
+msgid "Mounting ${ROOT_DEVICE} to ${MOUNTPOINT}..."
+msgstr ""
+
+#: format-and-mirror-copy:56
+msgid "Copying files to target partition..."
+msgstr ""
+
+#: format-and-mirror-copy:58
+msgid "Unmounting target partition..."
+msgstr ""
+
+#: format-and-mirror-copy:61 mk-live-recovery:140 mk-mirror-copy:77
+msgid "done."
+msgstr ""
+
+#: format-and-mirror-copy:68
+msgid "Recovery finished. Please reboot."
+msgstr ""
+
+#: mk-live-recovery:31
+#, sh-format
+msgid "directory not found: ${OUT_ISO_DIR}"
+msgstr ""
+
+#: mk-live-recovery:39
+msgid "Preparing exclude file..."
+msgstr ""
+
+#: mk-live-recovery:45
+msgid "Building root fs..."
+msgstr ""
+
+#: mk-live-recovery:69
+msgid "Packing root fs..."
+msgstr ""
+
+#: mk-live-recovery:76
+msgid "Building /boot..."
+msgstr ""
+
+#: mk-live-recovery:94
+msgid "Making /boot/grub/grub.cfg..."
+msgstr ""
+
+#: mk-live-recovery:99
+msgid "Making /recovery..."
+msgstr ""

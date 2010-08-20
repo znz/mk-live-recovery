@@ -1,35 +1,16 @@
 #!/bin/bash
-set -eu
-
-export TARGET_DRIVE=${TARGET_DRIVE:-/dev/sdb}
-export ROOT_DEVICE=${ROOT_DEVICE:-/dev/sdb1}
-export SWAP_DEVICE=${SWAP_DEVICE:-/dev/sdb5}
-export MOUNTPOINT=${MOUNTPOINT:-/mnt/sdb1}
+set -e
 
 if [ -f ./common-functions ]; then
     . common-functions
 else
     . /usr/share/mk-live-recovery/common-functions
 fi
-trap0_functions=("")
-run_trap0_functions () {
-    for x in "${trap0_functions[@]}"; do
-        $x
-    done
-}
 
-umount_target () {
-    $SUDO_CMD umount "$MOUNTPOINT"
-}
-
-mount_target () {
-    if awk "\$2==\"$MOUNTPOINT\"{exit 1}" /proc/mounts; then
-        $SUDO_CMD mount "$ROOT_DEVICE" "$MOUNTPOINT"
-        unshift_trap0_functions umount_target
-    else
-        echo "already mounted: $MOUNTPOINT"
-    fi
-}
+export TARGET_DRIVE=${TARGET_DRIVE:-/dev/sdb}
+export ROOT_DEVICE=${ROOT_DEVICE:-/dev/sdb1}
+export SWAP_DEVICE=${SWAP_DEVICE:-/dev/sdb5}
+export MOUNTPOINT=${MOUNTPOINT:-/mnt/sdb1}
 
 unlink_exclude_file () {
     if [ -f "$EXCLUDE_FILE" ]; then
@@ -63,7 +44,6 @@ data () {
     my_run_parts pre-mirror data
     mirror_data
     my_run_parts post-mirror data
-    echo "done."
 }
 
 full () {
@@ -73,7 +53,6 @@ full () {
     mirror_full
     bind_mount_in_target
     my_run_parts post-mirror full
-    echo "done."
 }
 
 live () {
@@ -83,7 +62,6 @@ live () {
     mirror_live
     bind_mount_in_target
     my_run_parts post-mirror live
-    echo "done."
 }
 
 usage () {
@@ -96,6 +74,7 @@ USAGE
 if [ "${1:+set}" = set ]; then
     set -x
     "$@"
+    gettext 'done.'; echo
 else
     usage
     exit 1

@@ -1,6 +1,6 @@
 #!/bin/bash
 # http://www.geekconnection.org/remastersys/info.html
-set -eu
+set -e
 
 export WORKDIR=${WORKDIR:-"/tmp/_work"}
 export CD_ROOT=${CD_ROOT:-"/tmp/_cd"}
@@ -21,38 +21,41 @@ else
 fi
 
 clean () {
-    $SUDO_CMD rm -rf "${WORKDIR}"
-    $SUDO_CMD rm -rf "${CD_ROOT}"
+    $SUDO_CMD rm -frv "${WORKDIR}"
+    $SUDO_CMD rm -frv "${CD_ROOT}"
 }
 
 prepare_dir () {
-    $SUDO_CMD mkdir -p "${MOUNTPOINT}"
-    $SUDO_CMD mkdir -p "${CD_ROOT}"
     if [ ! -d $(dirname "$OUT_ISO") ]; then
-	echo "directory not found: $(dirname "$OUT_ISO")"
+        OUT_ISO_DIR=$(dirname "$OUT_ISO")
+	eval_gettext 'directory not found: ${OUT_ISO_DIR}'; echo
 	exit 1
     fi
+    $SUDO_CMD mkdir -pv "${MOUNTPOINT}"
+    $SUDO_CMD mkdir -pv "${CD_ROOT}"
 }
 
 prepare_exclude () {
+    gettext 'Preparing exclude file...'; echo
     my_run_parts exclude live | $SUDO_CMD tee "$EXCLUDE_FILE"
 }
 
 build_root_fs () {
     local f d
+    gettext 'Building root fs...'; echo
     $SUDO_CMD rsync -av --delete -HAX --one-file-system --delete-excluded --exclude-from="$EXCLUDE_FILE" "/" "${MOUNTPOINT}/"
 
-    prepare_run_parts "${MOUNTPOINT}/tmp" "root-fs"
     if [ -d scripts ]; then
         # additional scripts
 	for f in scripts/*/*; do
 	    d=$(dirname "$f")
-	    mkdir -p "${MOUNTPOINT}/etc/initramfs-tools/$d"
+	    mkdir -pv "${MOUNTPOINT}/etc/initramfs-tools/$d"
 	    cp -v "$f" "${MOUNTPOINT}/etc/initramfs-tools/$f"
 	    chmod +x "${MOUNTPOINT}/etc/initramfs-tools/$f"
 	done
     fi
     bind_mount_dev_proc
+    prepare_run_parts "${MOUNTPOINT}/tmp" "root-fs"
     $SUDO_CMD chroot "${MOUNTPOINT}" /bin/bash -ex <<'EOF'
 export LANG=C
 for f in /tmp/root-fs.d/*.sh; do
@@ -63,34 +66,38 @@ EOF
 }
 
 pack_root_fs () {
-    $SUDO_CMD mkdir -p "${CD_ROOT}/${FS_DIR}"
-    $SUDO_CMD rm -f "${CD_ROOT}/${FS_DIR}/filesystem.${FORMAT}"
+    gettext 'Packing root fs...'; echo
+    $SUDO_CMD mkdir -pv "${CD_ROOT}/${FS_DIR}"
+    $SUDO_CMD rm -fv "${CD_ROOT}/${FS_DIR}/filesystem.${FORMAT}"
     $SUDO_CMD mksquashfs "${MOUNTPOINT}" "${CD_ROOT}/${FS_DIR}/filesystem.${FORMAT}"
 }
 
 build_cd_boot () {
-    $SUDO_CMD mkdir -p "${CD_ROOT}"/boot/grub/locale
-    $SUDO_CMD cp -vp /usr/share/grub/unicode.pf2 "${CD_ROOT}/boot/grub/"
+    gettext 'Building /boot...'; echo
+    $SUDO_CMD mkdir -pv "${CD_ROOT}"/boot/grub/locale
+    $SUDO_CMD cp -pv /usr/share/grub/unicode.pf2 "${CD_ROOT}/boot/grub/"
     if [ -f grub2-ja.po ]; then
 	if [ ! -e grub2-ja.mo ] || [ grub2-ja.mo -ot grub2-ja.po ]; then
 	    msgfmt -o grub2-ja.mo grub2-ja.po
 	fi
-	$SUDO_CMD cp -vp grub2-ja.mo "$CD_ROOT/boot/grub/locale/ja.mo"
+	$SUDO_CMD cp -pv grub2-ja.mo "$CD_ROOT/boot/grub/locale/ja.mo"
     elif [ -f /boot/grub/locale/ja.mo ]; then
-	$SUDO_CMD cp -vp /boot/grub/locale/ja.mo "${CD_ROOT}/boot/grub/locale/ja.mo"
+	$SUDO_CMD cp -pv /boot/grub/locale/ja.mo "${CD_ROOT}/boot/grub/locale/ja.mo"
     fi
-    $SUDO_CMD cp -vp "${MOUNTPOINT}/boot/vmlinuz-$(uname -r)" "${CD_ROOT}/boot/vmlinuz"
-    $SUDO_CMD cp -vp "${MOUNTPOINT}/boot/initrd.img-$(uname -r)" "${CD_ROOT}/boot/initrd.img"
-    $SUDO_CMD cp -vp "${MOUNTPOINT}/boot/memtest86+.bin" "${CD_ROOT}/boot"
+    $SUDO_CMD cp -pv "${MOUNTPOINT}/boot/vmlinuz-$(uname -r)" "${CD_ROOT}/boot/vmlinuz"
+    $SUDO_CMD cp -pv "${MOUNTPOINT}/boot/initrd.img-$(uname -r)" "${CD_ROOT}/boot/initrd.img"
+    $SUDO_CMD cp -pv "${MOUNTPOINT}/boot/memtest86+.bin" "${CD_ROOT}/boot"
 
 }
 
 make_grub_cfg () {
+    gettext 'Making /boot/grub/grub.cfg...'; echo
     my_run_parts grub | $SUDO_CMD tee "${CD_ROOT}/boot/grub/grub.cfg"
 }
 
 make_cdrom_recovery () {
-    $SUDO_CMD mkdir -p "${CD_ROOT}/recovery"
+    gettext 'Making /recovery...'; echo
+    $SUDO_CMD mkdir -pv "${CD_ROOT}/recovery"
     $SUDO_CMD sfdisk -d "${SFDISK_DRIVE}" | $SUDO_CMD tee "${CD_ROOT}/recovery/sfdisk-d.txt"
     [ ! -d recovery ] && cd /usr/share/mk-live-recovery
     $SUDO_CMD cp -v recovery/restore.desktop "${CD_ROOT}/recovery/restore.desktop"
@@ -129,8 +136,8 @@ USAGE
 }
 
 if [ "${1:+set}" = set ]; then
-    set -x
     "$@"
+    gettext 'done.'; echo
 else
     usage
     exit 1
