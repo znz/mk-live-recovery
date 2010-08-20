@@ -1,8 +1,7 @@
 #!/bin/sh
 LIVE_OPTIONS="boot=casper nopersistent rw quiet splash"
-if [ -n "$SUDO_USER" ]; then
-	LIVE_OPTIONS="$LIVE_OPTIONS username=$SUDO_USER hostname=recovery-$(hostname -s)"
-fi
+LIVE_OPTIONS="$LIVE_OPTIONS username=${SUDO_USER:-$(id -un)} hostname=recovery-$(hostname -s)"
+
 cat <<EOF
 menuentry "グラフィカルモードでライブ環境を起動する (Start Live GNU/Linux in Graphical Mode)" {
 	linux	/boot/vmlinuz $LIVE_OPTIONS
