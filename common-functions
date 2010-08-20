@@ -1,0 +1,85 @@
+#!/bin/bash
+
+# use sudo on demand
+if [ "${SUDO_CMD:+set}" = set ] && [ `id -u` -eq 0 ]; then
+    SUDO_CMD=
+else
+    SUDO_CMD=${SUDO_CMD:-"sudo"}
+fi
+export SUDO_CMD
+
+# hooks before exit
+# hook should be simple command. escaped string may cause troubles.
+trap0_functions=("")
+run_trap0_functions () {
+    for x in "${trap0_functions[@]}"; do
+	$x
+    done
+}
+
+push_trap0_functions () {
+    trap0_functions[${#trap0_functions[@]}]="$@"
+}
+
+pop_trap0_functions () {
+    trap0_functions=("${trap0_functions[@]:0:$[${#trap0_functions[@]}-1]}")
+}
+
+unshift_trap0_functions () {
+    trap0_functions=("$*" "${trap0_functions:+${trap0_functions[@]}}")
+}
+
+shift_trap0_functions () {
+    trap0_functions=("${trap0_functions[@]:1:$[${#trap0_functions[@]}]}")
+}
+
+trap run_trap0_functions 0
+
+# run shell scripts
+my_run_parts () {
+    local name=$1; shift
+    local f
+    prepare_run_parts "$WORKDIR" "$name"
+    for f in "$WORKDIR/$name.d"/*.sh; do
+	if [ -x "$f" ]; then
+	    "$f" "$@"
+	fi
+    done
+}
+
+prepare_run_parts () {
+    local work=$1
+    local name=$2
+    local f
+    if [ ! -d "$work/$name.d" ]; then
+        mkdir "$work/$name.d"
+        for f in $name.d/*.sh /usr/share/mk-live-recovery/$name.d/*.sh /etc/mk-live-recovery/$name.d/*.sh; do
+	    if [ -x "$f" ]; then
+	        cp "$f" "$work/$name.d"
+	    fi
+        done
+    fi
+}
+
+initd_start () {
+    my_run_parts init start
+}
+
+initd_stop () {
+    my_run_parts init stop
+}
+
+_bind_umount_dev_proc () {
+    $SUDO_CMD umount "$MOUNTPOINT/dev" || :
+    $SUDO_CMD umount "$MOUNTPOINT/proc" || :
+}
+bind_umount_dev_proc () {
+    _bind_umount_dev_proc
+    shift_trap0_functions
+}
+
+bind_mount_dev_proc () {
+    $SUDO_CMD mount --bind /proc "$MOUNTPOINT/proc"
+    $SUDO_CMD mount --bind /dev "$MOUNTPOINT/dev"
+    unshift_trap0_functions _bind_umount_dev_proc
+}

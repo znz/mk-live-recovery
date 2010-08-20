@@ -8,58 +8,25 @@ export OUT_ISO=${OUT_ISO:-$WORKDIR/live-recovery-$(date '+%Y%m%d').iso}
 export KERNEL_RELEASE=${KERNEL_RELEASE:-"$(uname -r)"}
 export INITRD_IMG=${INITRD_IMG:-"/boot/initrd.img-$KERNEL_RELEASE"}
 export VMLINUZ=${VMLINUZ:-"/boot/vmlinuz-$KERNEL_RELEASE"}
-if [ "${SUDO_CMD:+set}" = set ] && [ `id -u` -eq 0 ]; then
-    SUDO_CMD=
-else
-    SUDO_CMD=${SUDO_CMD:-"sudo"}
-fi
-export SUDO_CMD
-export ROOT_FS="${WORKDIR}/rootfs"
+export MOUNTPOINT="${WORKDIR}/rootfs"
 export FORMAT=squashfs
 export FS_DIR=casper
+export SFDISK_DRIVE=${SFDISK_DRIVE:-"/dev/sda"}
 EXCLUDE_FILE=${EXCLUDE_FILE:-"$WORKDIR/exclude-list.txt"}
 
-
-trap0_functions=("")
-run_trap0_functions () {
-    for x in "${trap0_functions[@]}"; do
-	$x
-    done
-}
-push_trap0_functions () {
-    trap0_functions[${#trap0_functions[@]}]="$@"
-}
-pop_trap0_functions () {
-    trap0_functions=("${trap0_functions[@]:0:$[${#trap0_functions[@]}-1]}")
-}
-trap run_trap0_functions 0
-
+if [ -f ./common-functions ]; then
+    . common-functions
+else
+    . /usr/share/mk-live-recovery/common-functions
+fi
 
 clean () {
     $SUDO_CMD rm -rf "${WORKDIR}"
     $SUDO_CMD rm -rf "${CD_ROOT}"
 }
 
-run_initd () {
-    local f
-    [ ! -d init.d ] && cd /etc/mk-live-recovery
-    for f in init.d/*.sh; do
-	if [ -x "$f" ]; then
-	    $SUDO_CMD "$f" "$@"
-	fi
-    done
-}
-
-initd_start () {
-    run_initd start
-}
-
-initd_stop () {
-    run_initd stop
-}
-
 prepare_dir () {
-    $SUDO_CMD mkdir -p "${ROOT_FS}"
+    $SUDO_CMD mkdir -p "${MOUNTPOINT}"
     $SUDO_CMD mkdir -p "${CD_ROOT}"
     if [ ! -d $(dirname "$OUT_ISO") ]; then
 	echo "directory not found: $(dirname "$OUT_ISO")"
@@ -68,53 +35,37 @@ prepare_dir () {
 }
 
 prepare_exclude () {
-    local f
-    {
-	[ ! -d exclude.d ] && cd /etc/mk-live-recovery
-	for f in exclude.d/*.sh; do
-	    if [ -x "$f" ]; then
-		"$f" live
-	    fi
-	done
-    } | $SUDO_CMD tee "$EXCLUDE_FILE"
+    my_run_parts exclude live | $SUDO_CMD tee "$EXCLUDE_FILE"
 }
 
 build_root_fs () {
     local f d
-    $SUDO_CMD rsync -av --delete -HAX --one-file-system --delete-excluded --exclude-from="$EXCLUDE_FILE" "/" "${ROOT_FS}/"
+    $SUDO_CMD rsync -av --delete -HAX --one-file-system --delete-excluded --exclude-from="$EXCLUDE_FILE" "/" "${MOUNTPOINT}/"
 
-    [ ! -d root-fs.d ] && cd /etc/mk-live-recovery
-    cp -rp root-fs.d "${ROOT_FS}/tmp/"
+    prepare_run_parts "${MOUNTPOINT}/tmp" "root-fs"
     if [ -d scripts ]; then
+        # additional scripts
 	for f in scripts/*/*; do
 	    d=$(dirname "$f")
-	    mkdir -p "${ROOT_FS}/etc/initramfs-tools/$d"
-	    cp -v "$f" "${ROOT_FS}/etc/initramfs-tools/$f"
-	    chmod +x "${ROOT_FS}/etc/initramfs-tools/$f"
+	    mkdir -p "${MOUNTPOINT}/etc/initramfs-tools/$d"
+	    cp -v "$f" "${MOUNTPOINT}/etc/initramfs-tools/$f"
+	    chmod +x "${MOUNTPOINT}/etc/initramfs-tools/$f"
 	done
     fi
-    $SUDO_CMD mount -o bind /dev/ "${ROOT_FS}/dev"
-    $SUDO_CMD mount -t proc proc "${ROOT_FS}/proc"
-    push_trap0_functions umount_in_root_fs
-    $SUDO_CMD chroot "${ROOT_FS}" /bin/bash -ex <<'EOF'
+    bind_mount_dev_proc
+    $SUDO_CMD chroot "${MOUNTPOINT}" /bin/bash -ex <<'EOF'
 export LANG=C
 for f in /tmp/root-fs.d/*.sh; do
     . $f
 done
 EOF
-    umount_in_root_fs
-    pop_trap0_functions
-}
-
-umount_in_root_fs () {
-    $SUDO_CMD umount "${ROOT_FS}/dev" || :
-    $SUDO_CMD umount "${ROOT_FS}/proc" || :
+    bind_umount_dev_proc
 }
 
 pack_root_fs () {
     $SUDO_CMD mkdir -p "${CD_ROOT}/${FS_DIR}"
     $SUDO_CMD rm -f "${CD_ROOT}/${FS_DIR}/filesystem.${FORMAT}"
-    $SUDO_CMD mksquashfs "${ROOT_FS}" "${CD_ROOT}/${FS_DIR}/filesystem.${FORMAT}"
+    $SUDO_CMD mksquashfs "${MOUNTPOINT}" "${CD_ROOT}/${FS_DIR}/filesystem.${FORMAT}"
 }
 
 build_cd_boot () {
@@ -128,27 +79,19 @@ build_cd_boot () {
     elif [ -f /boot/grub/locale/ja.mo ]; then
 	$SUDO_CMD cp -vp /boot/grub/locale/ja.mo "${CD_ROOT}/boot/grub/locale/ja.mo"
     fi
-    $SUDO_CMD cp -vp "${ROOT_FS}/boot/vmlinuz-$(uname -r)" "${CD_ROOT}/boot/vmlinuz"
-    $SUDO_CMD cp -vp "${ROOT_FS}/boot/initrd.img-$(uname -r)" "${CD_ROOT}/boot/initrd.img"
-    $SUDO_CMD cp -vp "${ROOT_FS}/boot/memtest86+.bin" "${CD_ROOT}/boot"
+    $SUDO_CMD cp -vp "${MOUNTPOINT}/boot/vmlinuz-$(uname -r)" "${CD_ROOT}/boot/vmlinuz"
+    $SUDO_CMD cp -vp "${MOUNTPOINT}/boot/initrd.img-$(uname -r)" "${CD_ROOT}/boot/initrd.img"
+    $SUDO_CMD cp -vp "${MOUNTPOINT}/boot/memtest86+.bin" "${CD_ROOT}/boot"
 
 }
 
 make_grub_cfg () {
-    local f
-    [ ! -d grub.d ] && cd /etc/mk-live-recovery
-    {
-	for f in grub.d/*.sh; do
-	    if [ -x "$f" ]; then
-		"$f"
-	    fi
-	done
-    } | $SUDO_CMD tee "${CD_ROOT}/boot/grub/grub.cfg"
+    my_run_parts grub | $SUDO_CMD tee "${CD_ROOT}/boot/grub/grub.cfg"
 }
 
 make_cdrom_recovery () {
     $SUDO_CMD mkdir -p "${CD_ROOT}/recovery"
-    $SUDO_CMD sfdisk -d /dev/sda | $SUDO_CMD tee "${CD_ROOT}/recovery/sfdisk-d-sda.txt"
+    $SUDO_CMD sfdisk -d "${SFDISK_DRIVE}" | $SUDO_CMD tee "${CD_ROOT}/recovery/sfdisk-d.txt"
     [ ! -d recovery ] && cd /usr/share/mk-live-recovery
     $SUDO_CMD cp -v recovery/restore.desktop "${CD_ROOT}/recovery/restore.desktop"
     $SUDO_CMD cp -v recovery/restore.sh "${CD_ROOT}/recovery/restore.sh"
@@ -158,10 +101,10 @@ make_cdrom_recovery () {
 
 build_iso () {
     (
-	cd ${CD_ROOT} &&
-	find . -name md5sum.txt -prune -o -type f -print0 |
-	xargs -0 sudo md5sum |
-	$SUDO_CMD tee "${CD_ROOT}/md5sum.txt"
+        cd ${CD_ROOT} &&
+        find . -name md5sum.txt -prune -o -type f -print0 |
+        xargs -0 sudo md5sum |
+        $SUDO_CMD tee "${CD_ROOT}/md5sum.txt"
     )
     $SUDO_CMD grub-mkrescue "--output=${OUT_ISO}" "${CD_ROOT}"
 }
@@ -169,7 +112,7 @@ build_iso () {
 build () {
     prepare_dir
     prepare_exclude
-    push_trap0_functions initd_start; initd_stop
+    unshift_trap0_functions initd_start; initd_stop
     build_root_fs
     pack_root_fs
     build_cd_boot

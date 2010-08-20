@@ -5,44 +5,17 @@ export TARGET_DRIVE=${TARGET_DRIVE:-/dev/sdb}
 export ROOT_DEVICE=${ROOT_DEVICE:-/dev/sdb1}
 export SWAP_DEVICE=${SWAP_DEVICE:-/dev/sdb5}
 export MOUNTPOINT=${MOUNTPOINT:-/mnt/sdb1}
-if [ "${SUDO_CMD:+set}" = set ] && [ `id -u` -eq 0 ]; then
-    SUDO_CMD=
-else
-    SUDO_CMD=${SUDO_CMD:-"sudo"}
-fi
-export SUDO_CMD
 
+if [ -f ./common-functions ]; then
+    . common-functions
+else
+    . /usr/share/mk-live-recovery/common-functions
+fi
 trap0_functions=("")
 run_trap0_functions () {
     for x in "${trap0_functions[@]}"; do
         $x
     done
-}
-unshift_trap0_functions () {
-    trap0_functions=("$*" "${trap0_functions:+${trap0_functions[@]}}")
-}
-shift_trap0_functions () {
-    trap0_functions=("${trap0_functions[@]:1:$[${#trap0_functions[@]}]}")
-}
-trap run_trap0_functions 0
-
-
-run_initd () {
-    local f
-    [ ! -d init.d ] && cd /etc/mk-live-recovery
-    for f in init.d/*.sh; do
-        if [ -x "$f" ]; then
-            $SUDO_CMD "$f" "$@"
-        fi
-    done
-}
-
-initd_start () {
-    run_initd start
-}
-
-initd_stop () {
-    run_initd stop
 }
 
 umount_target () {
@@ -58,17 +31,6 @@ mount_target () {
     fi
 }
 
-bind_umount_in_target () {
-    $SUDO_CMD umount "$MOUNTPOINT/dev"
-    $SUDO_CMD umount "$MOUNTPOINT/proc"
-}
-
-bind_mount_in_target () {
-    $SUDO_CMD mount --bind /proc "$MOUNTPOINT/proc"
-    $SUDO_CMD mount --bind /dev "$MOUNTPOINT/dev"
-    unshift_trap0_functions bind_umount_in_target
-}
-
 unlink_exclude_file () {
     if [ -f "$EXCLUDE_FILE" ]; then
         rm -f "$EXCLUDE_FILE"
@@ -78,15 +40,13 @@ unlink_exclude_file () {
 mk_exclude_file () {
     EXCLUDE_FILE=${EXCLUDE_FILE:-"$(mktemp)"}
     unshift_trap0_functions unlink_exclude_file
-    local f
-    {
-        [ ! -d exclude.d ] && cd /etc/mk-live-recovery
-        for f in exclude.d/*.sh; do
-            if [ -x "$f" ]; then
-                "$f" "$1"
-            fi
-        done
-    } | $SUDO_CMD tee "$EXCLUDE_FILE"
+    my_run_parts exclude "$1" | $SUDO_CMD tee "$EXCLUDE_FILE"
+}
+
+
+mirror_data () {
+    mk_exclude_file data
+    $SUDO_CMD rsync -av --delete -HAX --one-file-system --exclude-from="$EXCLUDE_FILE" "/" "${MOUNTPOINT}/"
 }
 
 mirror_full () {
@@ -94,43 +54,42 @@ mirror_full () {
     $SUDO_CMD rsync -av --delete -HAX --one-file-system --delete-excluded --exclude-from="$EXCLUDE_FILE" "/" "${MOUNTPOINT}/"
 }
 
-mirror_data () {
-    mk_exclude_file data
-    $SUDO_CMD rsync -av --delete -HAX --one-file-system --exclude-from="$EXCLUDE_FILE" "/" "${MOUNTPOINT}/"
+mirror_live () {
+    $SUDO_CMD rsync -aAHX --one-file-system --progress "${SRC_DIR}/" "${MOUNTPOINT}/"
 }
 
-run_hook () {
-    local hook_dir="$1"; shift
-    local f
-    [ ! -d "$hook_dir".d ] && cd /etc/mk-live-recovery
-    for f in "$hook_dir".d/*.sh; do
-        if [ -x "$f" ]; then
-            "$f" "$@"
-        fi
-    done
+data () {
+    mount_target
+    my_run_parts pre-mirror data
+    mirror_data
+    my_run_parts post-mirror data
+    echo "done."
 }
 
 full () {
     unshift_trap0_functions initd_start; initd_stop
     mount_target
-    run_hook pre-mirror full
+    my_run_parts pre-mirror full
     mirror_full
     bind_mount_in_target
-    run_hook post-mirror full
+    my_run_parts post-mirror full
     echo "done."
 }
 
-data () {
+live () {
+    unshift_trap0_functions initd_start; initd_stop
     mount_target
-    run_hook pre-mirror data
-    mirror_data
-    run_hook post-mirror data
+    my_run_parts pre-mirror live
+    mirror_live
+    bind_mount_in_target
+    my_run_parts post-mirror live
     echo "done."
 }
+
 usage () {
     cat <<USAGE
-usage: $0 full
 usage: $0 data
+usage: $0 full
 USAGE
 }
 

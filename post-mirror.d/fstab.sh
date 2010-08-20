@@ -42,7 +42,7 @@ make_etc_fstab () {
 }
 
 case "$1" in
-    full)
+    full|live)
 	set -x
 	make_etc_fstab
 	;;

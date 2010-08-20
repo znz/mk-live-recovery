@@ -1,30 +1,32 @@
 #!/bin/bash
-set -ex
+set -e
+
+if [ -f ./common-functions ]; then
+    . common-functions
+else
+    . /usr/share/mk-live-recovery/common-functions
+fi
+
 . ssft.sh
 SSFT_FRONTEND=${SSFT_FRONTEND:-$(ssft_choose_frontend)}
 export SSFT_FRONTEND
 cd "$(dirname "$0")"
 TIT="$(basename "$0")"
 
-MAIN=format-and-mirror-copy
+TEXTDOMAIN=restore
 export TEXTDOMAIN
 if [ -d locale ]; then
   TEXTDOMAINDIR=$(pwd)/locale
   export TEXTDOMAINDIR
 fi
 
-export SRC_DRIVE=${SRC_DRIVE:-/dev/sda}
+export LIVE_RECOVERY_MODE="${LIVE_RECOVERY_MODE:-false}"
+export SFDISK_D=${SFDISK_D:-/dev/sda}
 export TARGET_DRIVE=${TARGET_DRIVE:-/dev/sdb}
 export ROOT_DEVICE=${ROOT_DEVICE:-${TARGET_DRIVE}1}
 export SWAP_DEVICE=${SWAP_DEVICE:-${TARGET_DRIVE}5}
 export MOUNTPOINT=${MOUNTPOINT:-/mnt/sdb1}
-if [ "${SUDO_CMD:+set}" = set ] && [ `id -u` -eq 0 ]; then
-    SUDO_CMD=
-else
-    SUDO_CMD=${SUDO_CMD:-"sudo"}
-fi
-export SUDO_CMD
-
+export SRC_DIR=${SRC_DIR:-/}
 
 MSG="$(eval_gettext 'Format $TARGET_DRIVE, OK?')"
 if ssft_yesno "$TIT" "$MSG"; then
@@ -38,14 +40,48 @@ if ssft_yesno "$TIT" "$MSG"; then
 else
     exit $?
 fi
+
+if grep -q "$SWAP_DEVICE" /proc/swaps; then
+    eval_gettext 'Disable swap ${SWAP_DEVICE}...'; echo
+    $SUDO_CMD swapoff "$SWAP_DEVICE"
+fi
+
 gettext "Partitioning..."; echo
 if [ -n "$(LANG=C $SUDO_CMD sfdisk -R "$TARGET_DRIVE" 2>&1 | grep BLKRRPART)" ]; then
-    MSG="$(eval_gettext '$TARGET_DRIVE is currently in use. Can not format.')"
+    MSG="$(eval_gettext '${TARGET_DRIVE} is currently in use. Can not format.')"
     ssft_display_error "$TIT" "$MSG"
     exit 1
 fi
-$SUDO_CMD sfdisk -d "$SRC_DRIVE" | $SUDO_CMD sfdisk --force "$TARGET_DRIVE"
+if [ -f "$SFDISK_D" ]; then
+    $SUDO_CMD sfdisk --force "$TARGET_DRIVE" < "$SFDISK_D"
+else
+    $SUDO_CMD sfdisk -d "$SFDISK_D" | $SUDO_CMD sfdisk --force "$TARGET_DRIVE"
+fi
 
-$SUDO_CMD mkfs.ext4 "$ROOT_DEVICE"
+eval_gettext 'Formatting ${SWAP_DEVICE} as swap...'; echo
 $SUDO_CMD mkswap "$SWAP_DEVICE"
+$SUDO_CMD swapon "$SWAP_DEVICE"
+eval_gettext 'Formatting ${ROOT_DEVICE} as root partition...'; echo
+$SUDO_CMD mkfs.ext4 "$ROOT_DEVICE"
+eval_gettext 'Mounting ${ROOT_DEVICE} to ${MOUNTPOINT}...'; echo
+$SUDO_CMD mkdir -p "$MOUNTPOINT"
+$SUDO_CMD mount "$ROOT_DEVICE" "$MOUNTPOINT"
+gettext 'Copying files to target partition...'
 $SUDO_CMD mk-mirror-copy full
+gettext 'Unmounting target partition...'; echo
+umount "$MOUNTPOINT"
+swapoff "$SWAP_DEVICE"
+gettext 'done.'
+
+if $LIVE_RECOVERY_MODE; then
+    # Notify the user that a reboot is required
+    if [ -x /usr/share/update-notifier/notify-reboot-required ]; then
+        $SUDO_CMD /usr/share/update-notifier/notify-reboot-required
+    fi
+    MSG="$(gettext 'Recovery finished. Please reboot.')"
+    if ssft_display_message "$TIT" "$MSG"; then
+        :
+    else
+        exit $?
+    fi
+fi

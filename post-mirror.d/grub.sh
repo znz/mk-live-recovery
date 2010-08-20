@@ -11,7 +11,7 @@ install_grub () {
 }
 
 case "$1" in
-    full)
+    full|live)
 	set -x
 	install_grub
 	;;

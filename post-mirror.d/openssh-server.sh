@@ -12,7 +12,7 @@ generate_openssh_host_keys () {
 }
 
 case "$1" in
-    full)
+    full|live)
 	set -x
 	generate_openssh_host_keys
 	;;
