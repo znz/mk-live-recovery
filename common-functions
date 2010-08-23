@@ -48,15 +48,28 @@ shift_trap0_functions () {
 
 trap run_trap0_functions 0
 
+prepare_workdir () {
+    if [ "${WORKDIR:+set}" = set ]; then
+        return
+    fi
+    WORKDIR=$(mktemp -d /tmp/mk-live-recovery.XXXXXXXXXX)
+    push_trap0_functions "rm -rf $WORKDIR"
+}
+
 # run shell scripts
 my_run_parts () {
     local name=$1; shift
     local f
+    prepare_workdir
     prepare_run_parts "$WORKDIR" "$name"
     for f in "$WORKDIR/$name.d"/*.sh; do
-	if [ -x "$f" ]; then
-	    "$f" "$@"
-	fi
+        if [ -x "$f" ]; then
+            if ! "$f" "$@"; then
+                exit_status=$?
+                echo FAILED:$exit_status: "$f" "$@"
+                return $exit_status
+            fi
+        fi
     done
 }
 
