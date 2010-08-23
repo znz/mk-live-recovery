@@ -54,7 +54,11 @@ eval_gettext 'Mounting ${ROOT_DEVICE} to ${MOUNTPOINT}...'; echo
 $SUDO_CMD mkdir -p "$MOUNTPOINT"
 $SUDO_CMD mount "$ROOT_DEVICE" "$MOUNTPOINT"
 gettext 'Copying files to target partition...'
-$SUDO_CMD mk-mirror-copy full
+if $LIVE_RECOVERY_MODE; then
+    $SUDO_CMD mk-mirror-copy live
+else
+    $SUDO_CMD mk-mirror-copy full
+fi
 gettext 'Unmounting target partition...'; echo
 umount "$MOUNTPOINT"
 swapoff "$SWAP_DEVICE"
