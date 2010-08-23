@@ -9,20 +9,26 @@ if [ -f /etc/default/mk-live-recovery ]; then
     . /etc/default/mk-live-recovery
 fi
 
-postgresql_dump_all () {
+check_pg_database () {
     if ! id -u postgres >/dev/null 2>&1; then
 	echo postgres not installed
-	return
+	return 1
     fi
 
-    PG_DATABASES=$( su postgres -c "psql -c 'SELECT datname FROM pg_database;'" | egrep '^ [^ ]' | egrep -v '^ template[01]$|^ postgres$' )
+    PG_DATABASES=$($SUDO_CMD su postgres -c "psql -c 'SELECT datname FROM pg_database;'" | egrep '^ [^ ]' | egrep -v '^ template[01]$|^ postgres$')
+}
 
-    mkdir -p "$PG_BACKUP_DIR"
-    savelog -q "$PG_BACKUP_DIR/psql-l.txt" 
-    su postgres -c "psql -l" >"$PG_BACKUP_DIR/psql-l.txt" 
+postgresql_dump_all () {
+    if ! check_pg_database; then
+        return
+    fi
+
+    $SUDO_CMD mkdir -p "$PG_BACKUP_DIR"
+    $SUDO_CMD savelog -q "$PG_BACKUP_DIR/psql-l.txt" 
+    $SUDO_CMD su postgres -c "psql -l" | $SUDO_CMD tee "$PG_BACKUP_DIR/psql-l.txt" > /dev/null
     for db_name in $PG_DATABASES; do
-	savelog -q "$PG_BACKUP_DIR/$db_name.pg_dump" 
-        su postgres -c "$PG_DUMP $db_name" >"$PG_BACKUP_DIR/$db_name.pg_dump" 
+	$SUDO_CMD savelog -q "$PG_BACKUP_DIR/$db_name.pg_dump" 
+        $SUDO_CMD su postgres -c "$PG_DUMP $db_name" | $SUDO_CMD tee "$PG_BACKUP_DIR/$db_name.pg_dump" > /dev/null
     done
 }
 
