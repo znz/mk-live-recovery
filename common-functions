@@ -66,7 +66,7 @@ prepare_run_parts () {
     local f
     if [ ! -d "$work/$name.d" ]; then
         mkdir "$work/$name.d"
-        for f in $name.d/*.sh /usr/share/mk-live-recovery/$name.d/*.sh /etc/mk-live-recovery/$name.d/*.sh; do
+        for f in /usr/share/mk-live-recovery/$name.d/*.sh /etc/mk-live-recovery/$name.d/*.sh $name.d/*.sh; do
 	    if [ -x "$f" ]; then
 	        cp "$f" "$work/$name.d"
 	    fi
