@@ -2,7 +2,7 @@
 set -e
 
 if [ -f ./common-functions ]; then
-    . common-functions
+    . ./common-functions
 else
     . /usr/share/mk-live-recovery/common-functions
 fi
@@ -50,17 +50,25 @@ $SUDO_CMD mkswap "$SWAP_DEVICE"
 $SUDO_CMD swapon "$SWAP_DEVICE"
 eval_gettext 'Formatting ${ROOT_DEVICE} as root partition...'; echo
 $SUDO_CMD mkfs.ext4 "$ROOT_DEVICE"
-eval_gettext 'Mounting ${ROOT_DEVICE} to ${MOUNTPOINT}...'; echo
+eval_gettext 'Creating ${MOUNTPOINT}...'; echo
 $SUDO_CMD mkdir -p "$MOUNTPOINT"
-$SUDO_CMD mount "$ROOT_DEVICE" "$MOUNTPOINT"
+#$SUDO_CMD mount "$ROOT_DEVICE" "$MOUNTPOINT"
 gettext 'Copying files to target partition...'
 if $LIVE_RECOVERY_MODE; then
-    mk-mirror-copy live
+    if [ -x ./mk-mirror-copy ]; then
+        ./mk-mirror-copy live
+    else
+        mk-mirror-copy live
+    fi
 else
-    mk-mirror-copy full
+    if [ -x ./mk-mirror-copy ]; then
+        ./mk-mirror-copy full
+    else
+        mk-mirror-copy full
+    fi
 fi
 gettext 'Unmounting target partition...'; echo
-umount "$MOUNTPOINT"
+#umount "$MOUNTPOINT"
 swapoff "$SWAP_DEVICE"
 gettext 'done.'; echo
 

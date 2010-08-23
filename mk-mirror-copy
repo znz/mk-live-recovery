@@ -2,7 +2,7 @@
 set -e
 
 if [ -f ./common-functions ]; then
-    . common-functions
+    . ./common-functions
 else
     . /usr/share/mk-live-recovery/common-functions
 fi
