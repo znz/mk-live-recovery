@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-08-23 17:50+0900\n"
+"POT-Creation-Date: 2010-08-23 19:16+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -31,10 +31,10 @@ msgstr "${TARGET_DRIVE} をフォーマットします。よろしいですか?"
 msgid "Format ${TARGET_DRIVE}, really OK?"
 msgstr "${TARGET_DRIVE} をフォーマットします。本当によろしいですか?"
 
-#: format-and-mirror-copy:32
+#: format-and-mirror-copy:32 format-and-mirror-copy:70
 #, sh-format
-msgid "Disable swap ${SWAP_DEVICE}..."
-msgstr "${SWAP_DEVICE} を無効にしています..."
+msgid "Disabling swap ${SWAP_DEVICE}..."
+msgstr "スワップデバイス「${SWAP_DEVICE}」を無効にしています..."
 
 #: format-and-mirror-copy:36
 msgid "Partitioning..."
@@ -50,29 +50,30 @@ msgstr "${TARGET_DRIVE} が使用中です。フォーマットできません�
 msgid "Formatting ${SWAP_DEVICE} as swap..."
 msgstr "${SWAP_DEVICE} をスワップ領域として初期化中..."
 
-#: format-and-mirror-copy:51
+#: format-and-mirror-copy:50
+#, sh-format
+msgid "Enabling swap ${SWAP_DEVICE}..."
+msgstr "スワップデバイス「${SWAP_DEVICE}」を有効にしています..."
+
+#: format-and-mirror-copy:52
 #, sh-format
 msgid "Formatting ${ROOT_DEVICE} as root partition..."
 msgstr "${ROOT_DEVICE} をルート領域として初期化中..."
 
-#: format-and-mirror-copy:53
+#: format-and-mirror-copy:54
 #, sh-format
-msgid "Mounting ${ROOT_DEVICE} to ${MOUNTPOINT}..."
-msgstr "${ROOT_DEVICE} を ${MOUNTPOINT} にマウント中..."
+msgid "Creating mount point ${MOUNTPOINT}..."
+msgstr "マウントポイント「${MOUNTPOINT}」を作成中..."
 
 #: format-and-mirror-copy:56
 msgid "Copying files to target partition..."
 msgstr "ターゲット領域にファイルをコピー中..."
 
-#: format-and-mirror-copy:58
-msgid "Unmounting target partition..."
-msgstr "ターゲット領域をアンマウント中..."
-
-#: format-and-mirror-copy:61 mk-live-recovery:142 mk-mirror-copy:77
+#: format-and-mirror-copy:72 mk-live-recovery:142 mk-mirror-copy:77
 msgid "done."
 msgstr "完了。"
 
-#: format-and-mirror-copy:68
+#: format-and-mirror-copy:79
 msgid "Recovery finished. Please reboot."
 msgstr "リカバリが完了しました。再起動してください。"
 
