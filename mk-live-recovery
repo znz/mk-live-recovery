@@ -102,8 +102,10 @@ make_cdrom_recovery () {
     [ ! -d recovery ] && cd /usr/share/mk-live-recovery
     $SUDO_CMD cp -v recovery/restore.desktop "${CD_ROOT}/recovery/restore.desktop"
     $SUDO_CMD cp -v recovery/restore.sh "${CD_ROOT}/recovery/restore.sh"
-    $SUDO_CMD cp -rv recovery/locale/ "${CD_ROOT}/recovery/locale/"
     $SUDO_CMD chmod +x "${CD_ROOT}/recovery/restore.sh"
+    [ ! -d locale ] && cd /usr/share
+    $SUDO_CMD mkdir -pv "${CD_ROOT}/recovery/locale"
+    $SUDO_CMD cp -v locale/ja/LC_MESSAGES/mk-live-recovery.mo "${CD_ROOT}/recovery/locale/"
 }
 
 build_iso () {
