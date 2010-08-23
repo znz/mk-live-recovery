@@ -28,10 +28,14 @@ else
     exit $?
 fi
 
-if grep -q "$SWAP_DEVICE" /proc/swaps; then
-    eval_gettext 'Disabling swap ${SWAP_DEVICE}...'; echo
-    $SUDO_CMD swapoff "$SWAP_DEVICE"
-fi
+disable_swap () {
+    if grep -q "$SWAP_DEVICE" /proc/swaps; then
+        eval_gettext 'Disabling swap ${SWAP_DEVICE}...'; echo
+        $SUDO_CMD swapoff "$SWAP_DEVICE"
+    fi
+}
+
+disable_swap
 
 gettext "Partitioning..."; echo
 if [ -n "$(LANG=C $SUDO_CMD sfdisk -R "$TARGET_DRIVE" 2>&1 | grep BLKRRPART)" ]; then
@@ -48,38 +52,44 @@ fi
 eval_gettext 'Formatting ${SWAP_DEVICE} as swap...'; echo
 $SUDO_CMD mkswap "$SWAP_DEVICE"
 eval_gettext 'Enabling swap ${SWAP_DEVICE}...'; echo
+unshift_trap0_functions disable_swap
 $SUDO_CMD swapon "$SWAP_DEVICE"
 eval_gettext 'Formatting ${ROOT_DEVICE} as root partition...'; echo
 $SUDO_CMD mkfs.ext4 "$ROOT_DEVICE"
 eval_gettext 'Creating mount point ${MOUNTPOINT}...'; echo
 $SUDO_CMD mkdir -p "$MOUNTPOINT"
-gettext 'Copying files to target partition...'
-if $LIVE_RECOVERY_MODE; then
-    if [ -x ./mk-mirror-copy ]; then
-        ./mk-mirror-copy live
-    else
-        mk-mirror-copy live
-    fi
+if [ -x ./mk-mirror-copy ]; then
+    CMD=./mk-mirror-copy
 else
-    if [ -x ./mk-mirror-copy ]; then
-        ./mk-mirror-copy full
-    else
-        mk-mirror-copy full
-    fi
+    CMD=mk-mirror-copy
 fi
-eval_gettext 'Disabling swap ${SWAP_DEVICE}...'; echo
-swapoff "$SWAP_DEVICE"
-gettext 'done.'; echo
-
 if $LIVE_RECOVERY_MODE; then
-    # Notify the user that a reboot is required
-    if [ -x /usr/share/update-notifier/notify-reboot-required ]; then
-        $SUDO_CMD /usr/share/update-notifier/notify-reboot-required
+    ARG=live
+else
+    ARG=full
+fi
+gettext 'Copying files to target partition...'
+if $CMD $ARG; then
+    if $LIVE_RECOVERY_MODE; then
+        # Notify the user that a reboot is required
+        if [ -x /usr/share/update-notifier/notify-reboot-required ]; then
+            $SUDO_CMD /usr/share/update-notifier/notify-reboot-required
+        fi
+        MSG="$(gettext 'Recovery finished. Please reboot.')"
+    else
+        MSG="$(gettext 'Copy finished.')"
     fi
-    MSG="$(gettext 'Recovery finished. Please reboot.')"
     if ssft_display_message "$TIT" "$MSG"; then
         :
     else
         exit $?
     fi
+else
+    if $LIVE_RECOVERY_MODE; then
+        MSG="$(gettext 'Recovery failed.')"
+    else
+        MSG="$(gettext 'Copy failed.')"
+    fi
+    ssft_display_error "$TIT" "$MSG"
+    exit 1
 fi
