@@ -55,9 +55,9 @@ $SUDO_CMD mkdir -p "$MOUNTPOINT"
 $SUDO_CMD mount "$ROOT_DEVICE" "$MOUNTPOINT"
 gettext 'Copying files to target partition...'
 if $LIVE_RECOVERY_MODE; then
-    $SUDO_CMD mk-mirror-copy live
+    mk-mirror-copy live
 else
-    $SUDO_CMD mk-mirror-copy full
+    mk-mirror-copy full
 fi
 gettext 'Unmounting target partition...'; echo
 umount "$MOUNTPOINT"
