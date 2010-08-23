@@ -8,13 +8,18 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-08-20 21:13+0900\n"
+"POT-Creation-Date: 2010-08-23 17:50+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+
+#: common-functions:109
+#, sh-format
+msgid "OK, already mounted: ${MOUNTPOINT}"
+msgstr "${MOUNTPOINT} はマウント済みです。そのまま続行します。"
 
 #: format-and-mirror-copy:18
 #, sh-format
@@ -63,7 +68,7 @@ msgstr "ターゲット領域にファイルをコピー中..."
 msgid "Unmounting target partition..."
 msgstr "ターゲット領域をアンマウント中..."
 
-#: format-and-mirror-copy:61 mk-live-recovery:140 mk-mirror-copy:77
+#: format-and-mirror-copy:61 mk-live-recovery:142 mk-mirror-copy:77
 msgid "done."
 msgstr "完了。"
 

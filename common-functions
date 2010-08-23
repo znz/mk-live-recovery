@@ -106,7 +106,7 @@ mount_target () {
         $SUDO_CMD mount "$ROOT_DEVICE" "$MOUNTPOINT"
         unshift_trap0_functions umount_target
     else
-        echo "already mounted: $MOUNTPOINT"
+        eval_gettext 'OK, already mounted: ${MOUNTPOINT}'; echo
     fi
 }
 
