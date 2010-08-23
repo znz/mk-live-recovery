@@ -51,7 +51,7 @@ full () {
     mount_target
     my_run_parts pre-mirror full
     mirror_full
-    bind_mount_in_target
+    bind_mount_dev_proc
     my_run_parts post-mirror full
 }
 
@@ -60,7 +60,7 @@ live () {
     mount_target
     my_run_parts pre-mirror live
     mirror_live
-    bind_mount_in_target
+    bind_mount_dev_proc
     my_run_parts post-mirror live
 }
 
