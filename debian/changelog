@@ -1,8 +1,8 @@
-mk-live-recovery (0~20100819) lucid; urgency=low
+mk-live-recovery (0~20100823) lucid; urgency=low
 
   * Update version.
 
- -- Kazuhiro NISHIYAMA <zn@mbf.nifty.com>  Thu, 19 Aug 2010 20:09:02 +0900
+ -- Kazuhiro NISHIYAMA <zn@mbf.nifty.com>  Tue, 24 Aug 2010 17:01:05 +0900
 
 mk-live-recovery (0~20100818) lucid; urgency=low
 
