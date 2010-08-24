@@ -8,7 +8,9 @@ export MOUNTPOINT=${MOUNTPOINT:-/target}
 export SRC_DIR=${SRC_DIR:-/rofs}
 export WORKDIR=$(mktemp -d /tmp/restore.XXXXXXXXXX)
 
-umount $MOUNTPOINT || :
+if awk "\$2!=\"$MOUNTPOINT\"{exit 1}" /proc/mounts; then
+    umount $MOUNTPOINT || :
+fi
 if [ -f ./format-and-mirror-copy ]; then
     exec ./format-and-mirror-copy live
 else
