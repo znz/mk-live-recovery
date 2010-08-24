@@ -26,13 +26,13 @@ clean () {
 }
 
 prepare_dir () {
-    if [ ! -d $(dirname "$OUT_ISO") ]; then
-        OUT_ISO_DIR=$(dirname "$OUT_ISO")
-	eval_gettext 'directory not found: ${OUT_ISO_DIR}'; echo
-	exit 1
-    fi
     $SUDO_CMD mkdir -pv "${MOUNTPOINT}"
     $SUDO_CMD mkdir -pv "${CD_ROOT}"
+    if [ ! -d $(dirname "$OUT_ISO") ]; then
+        OUT_ISO_DIR=$(dirname "$OUT_ISO")
+        eval_gettext 'directory not found: ${OUT_ISO_DIR}'; echo
+        exit 1
+    fi
 }
 
 prepare_exclude () {
