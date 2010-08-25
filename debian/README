@@ -10,7 +10,8 @@ This package can use installed as "All files in one partition".
 * 
 
 (In Japanese)
-"All files in one partition".
+mk-live-recovery はディスクのパーティショニングで「ガイド - ディスク全体を使う」を選んだときのように sda1 が / で sda5 が swap になっているシステム用になっています。
+format-and-mirror-copy や mk-mirror-copy は同じ容量の HDD を sdb に接続してそこにバックアップをする構成を想定しています。
 
 * ISOイメージの作成: mk-live-recovery build で /tmp/_work/live-recovery-日付.iso が出来る。
 * HDDクラッシュ時: 残った方を番号の小さい方につないで起動して format-and-mirror-copy
