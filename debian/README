@@ -1,6 +1,23 @@
 The Debian Package mk-live-recovery
 ----------------------------
 
-This package can use installed as "All files in one partition". 
+This package can use installed as "All files in one partition".
 
- -- Kazuhiro NISHIYAMA <zn@mbf.nifty.com>  Tue, 17 Aug 2010 01:48:00 +0900
+* make iso image: run `mk-live-recovery build`, and see /tmp/_work/*.iso
+* When HDD crashed, attach rest HDD to sda, boot, and run `format-and-mirror-copy`
+* When first boot, `mk-mirror-copy full` makes system copy.
+* `mk-mirror-copy data` backups data (default is /home only).
+* 
+
+(In Japanese)
+"All files in one partition".
+
+* ISOイメージの作成: mk-live-recovery build で /tmp/_work/live-recovery-日付.iso が出来る。
+* HDDクラッシュ時: 残った方を番号の小さい方につないで起動して format-and-mirror-copy
+* 初回の立ち上げ時のみ全内容コピーは mk-mirror-copy full
+* データのバックアップは mk-mirror-copy data
+* HDD両方クラッシュ時はISOイメージから起動してデスクトップにある「リカバリ実行」から。
+
+カスタマイズ:
+* /usr/share/mk-live-recovery/*.d と同じディレクトリを /etc/mk-live-recovery/*.d やカレントディレクトリの下に用意すれば、挙動を変更できます。
+
