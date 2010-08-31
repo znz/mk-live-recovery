@@ -8,6 +8,6 @@ Homepage: http://github.com/znz/mk-live-recovery
 
 Package: mk-live-recovery
 Architecture: all
-Depends: casper, ${misc:Depends}
+Depends: casper, ssft, squashfs-tools, ${misc:Depends}
 Description: Live recovery image maker
  mk-live-recovery makes live image that can recovery OS.
