@@ -7,10 +7,10 @@ else
     . /usr/share/mk-live-recovery/common-functions
 fi
 
-export TARGET_DRIVE=${TARGET_DRIVE:-/dev/sdb}
-export ROOT_DEVICE=${ROOT_DEVICE:-/dev/sdb1}
-export SWAP_DEVICE=${SWAP_DEVICE:-/dev/sdb5}
-export MOUNTPOINT=${MOUNTPOINT:-/mnt/sdb1}
+export TARGET_DRIVE=${TARGET_DRIVE:-$(target_drive $(boot_drive))}
+export ROOT_DEVICE=${ROOT_DEVICE:-${TARGET_DRIVE}1}
+export SWAP_DEVICE=${SWAP_DEVICE:-${TARGET_DRIVE}5}
+export MOUNTPOINT=${MOUNTPOINT:-/mnt/target}
 
 unlink_exclude_file () {
     if [ -f "$EXCLUDE_FILE" ]; then

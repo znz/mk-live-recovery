@@ -8,11 +8,11 @@ else
 fi
 
 export LIVE_RECOVERY_MODE="${LIVE_RECOVERY_MODE:-false}"
-export SFDISK_D=${SFDISK_D:-/dev/sda}
-export TARGET_DRIVE=${TARGET_DRIVE:-/dev/sdb}
+export SFDISK_D=${SFDISK_D:-$(boot_drive)}
+export TARGET_DRIVE=${TARGET_DRIVE:-$(target_drive "$SFDISK_D")}
 export ROOT_DEVICE=${ROOT_DEVICE:-${TARGET_DRIVE}1}
 export SWAP_DEVICE=${SWAP_DEVICE:-${TARGET_DRIVE}5}
-export MOUNTPOINT=${MOUNTPOINT:-/mnt/sdb1}
+export MOUNTPOINT=${MOUNTPOINT:-/mnt/target}
 export SRC_DIR=${SRC_DIR:-/}
 
 MSG="$(eval_gettext 'Format ${TARGET_DRIVE}, OK?')"

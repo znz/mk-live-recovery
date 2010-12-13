@@ -123,6 +123,27 @@ mount_target () {
     fi
 }
 
+root_device () {
+    mount | awk '$3=="/"{d=$1}END{print d}'
+}
+
+boot_drive () {
+    root_device | sed 's,[0-9]*$,,'
+}
+
+target_drive () {
+    case "$1" in
+	/dev/?d[ab])
+	    # /dev/sda <-> /dev/sdb
+	    echo "$1" | tr ab ba
+	    ;;
+	*)
+	    # fallback, guess other drive
+	    echo /dev/?d? | grep -v "$1" | tail -n1
+	    ;;
+    esac
+}
+
 V () {
 	echo "+" "$@"
 	"$@"

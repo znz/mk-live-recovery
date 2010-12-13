@@ -2,6 +2,12 @@
 # http://www.geekconnection.org/remastersys/info.html
 set -e
 
+if [ -f ./common-functions ]; then
+    . ./common-functions
+else
+    . /usr/share/mk-live-recovery/common-functions
+fi
+
 export WORKDIR=${WORKDIR:-"/tmp/_work"}
 export CD_ROOT=${CD_ROOT:-"/tmp/_cd"}
 export OUT_ISO=${OUT_ISO:-$WORKDIR/live-recovery-$(date '+%Y%m%d').iso}
@@ -11,14 +17,8 @@ export VMLINUZ=${VMLINUZ:-"/boot/vmlinuz-$KERNEL_RELEASE"}
 export MOUNTPOINT="${WORKDIR}/rootfs"
 export FORMAT=squashfs
 export FS_DIR=casper
-export SFDISK_DRIVE=${SFDISK_DRIVE:-"/dev/sda"}
+export SFDISK_DRIVE=${SFDISK_DRIVE:-$(boot_drive)}
 EXCLUDE_FILE=${EXCLUDE_FILE:-"$WORKDIR/exclude-list.txt"}
-
-if [ -f ./common-functions ]; then
-    . ./common-functions
-else
-    . /usr/share/mk-live-recovery/common-functions
-fi
 
 clean () {
     $SUDO_CMD rm -frv "${WORKDIR}"
