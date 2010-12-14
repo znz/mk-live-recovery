@@ -8,6 +8,11 @@ else
     . /usr/share/mk-live-recovery/common-functions
 fi
 
+# Include mk-live-recovery defaults if available
+if [ -f /etc/default/mk-live-recovery ] ; then
+    . /etc/default/mk-live-recovery
+fi
+
 export WORKDIR=${WORKDIR:-"/tmp/_work"}
 export CD_ROOT=${CD_ROOT:-"/tmp/_cd"}
 export OUT_ISO=${OUT_ISO:-$WORKDIR/live-recovery-$(date '+%Y%m%d').iso}
@@ -115,7 +120,7 @@ build_iso () {
         xargs -0 sudo md5sum |
         $SUDO_CMD tee "${CD_ROOT}/md5sum.txt"
     )
-    $SUDO_CMD grub-mkrescue "--output=${OUT_ISO}" "${CD_ROOT}"
+    $SUDO_CMD grub_mkisofs_arguments="$grub_mkisofs_arguments" grub-mkrescue "--output=${OUT_ISO}" "${CD_ROOT}"
 }
 
 build () {

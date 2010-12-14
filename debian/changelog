@@ -1,3 +1,9 @@
+mk-live-recovery (0~20101214) lucid; urgency=low
+
+  * add grub_mkisofs_arguments.
+
+ -- Kazuhiro NISHIYAMA <zn@mbf.nifty.com>  Tue, 14 Dec 2010 20:09:38 +0900
+
 mk-live-recovery (0~20101213) lucid; urgency=low
 
   * auto detect SFDISK_D and TARGET_DRIVE

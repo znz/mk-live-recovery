@@ -1,0 +1,3 @@
+# see manpage of grub-mkisofs
+# -V : Volume ID (max 31 bytes)
+grub_mkisofs_arguments="-V LIVE-RECOVERY-$(date +%Y-%m-%d)"
